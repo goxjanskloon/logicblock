@@ -30,17 +30,14 @@ public class BoardFrame extends JFrame{
             if(block.x<xl||xr<block.x||block.y<yl||yr<block.y) return;
             paint(block);
     }}
-    private enum OperationType{CLEAR,SET_TYPE,NONE};
-    private static BufferedImage[][] images=null;
+    private static BufferedImage[][] IMAGES=null;
+    private static BufferedImage[][][][] LINE_IMAGES=null;
     private Board board;
     private Graphics graphics=null;
     private int xOffset=0,yOffset=0,blockSize=50,choosedType=0,xOfsOrg=0,yOfsOrg=0;
     private File file=null;
-    private OperationType operationType=OperationType.NONE;
-    private Block choosedBlock=null;
-    private boolean MMoved=false;
     static{try{
-        images=new BufferedImage[][]{
+        IMAGES=new BufferedImage[][]{
         {ImageIO.read(new File("img/VOID0.png")),
          ImageIO.read(new File("img/VOID1.png"))},
         {ImageIO.read(new File("img/OR0.png")),
@@ -72,47 +69,30 @@ public class BoardFrame extends JFrame{
                 case'O':
                     if(openFile()) JOptionPane.showMessageDialog(BoardFrame.this,"Open failed!");
                     repaint();break;
-                case'L':operationType=OperationType.LINK;break;
                 case'Q':blockSize+=10;repaint();break;
                 case'E':if(blockSize>10)blockSize-=10;repaint();break;
                 default:{char c=ke.getKeyChar();if('1'<=c&&c<='6') choosedType=c-'1';}break;
-            }}
-        });
+        }}});
         addMouseListener(new MouseAdapter(){
             public void mousePressed(MouseEvent me){if(!board.isEmpty()){
+                xOfsOrg=xOffset-me.getX();yOfsOrg=yOffset-me.getY();}}
+            public void mouseClicked(MouseEvent me){if(!board.isEmpty()){
                 switch(me.getButton()){
-                case MouseEvent.BUTTON1:
-                    xOfsOrg=xOffset-me.getX();yOfsOrg=yOffset-me.getY();
-                    operationType=OperationType.CLEAR;break;
-                case MouseEvent.BUTTON3:operationType=OperationType.SET_TYPE;break;
+                case MouseEvent.BUTTON1:{
+                    Board.Block block=MToBlock(me.getX(),me.getY());
+                    if(block!=null) block.clear();}break;
+                case MouseEvent.BUTTON3:{
+                    Board.Block block=MToBlock(me.getX(),me.getY());
+                    if(block!=null)
+                        switch(block.getType()){
+                        case SRC:block.inverseValue();break;
+                        case LINE:block.toNextFacing();break;
+                        default:block.setType(Block.Type.valueOf(choosedType));break;}}break;
                 default:break;
-            }}}
-            public void mouseReleased(MouseEvent me){
-                switch(operationType){
-                case LINK:{
-                    Board.Block block=MToBlock(me.getX(),me.getY());
-                    if(block!=null)
-                        if(choosedBlock==null) choosedBlock=block;
-                        else{choosedBlock.addOutput(block);operationType=OperationType.NONE;choosedBlock=null;}
-                    }break;
-                case CLEAR:if(!MMoved){
-                    Board.Block block=MToBlock(me.getX(),me.getY());
-                    if(block!=null) block.clear();
-                    }operationType=OperationType.NONE;MMoved=false;break;
-                case SET_TYPE:if(!MMoved){
-                    Board.Block block=MToBlock(me.getX(),me.getY());
-                    if(block!=null)
-                        if(block.getType()!=Block.Type.SRC) block.setType(Block.Type.valueOf(choosedType));
-                        else block.inverseValue();
-                    }operationType=OperationType.NONE;MMoved=false;break;
-                case NONE:break;
-                default:operationType=OperationType.NONE;break;
-        }}});
+        }}}});
         addMouseMotionListener(new MouseAdapter(){
-            public void mouseDragged(MouseEvent me){
-                xOffset=me.getX()+xOfsOrg;yOffset=me.getY()+yOfsOrg;
-                repaint();MMoved=true;
-            }});
+            public void mouseDragged(MouseEvent me){if(!board.isEmpty()&&me.getButton()==MouseEvent.BUTTON2){
+                xOffset=me.getX()+xOfsOrg;yOffset=me.getY()+yOfsOrg;repaint();}}});
     }
     @Override
     public void setVisible(boolean visible){
@@ -121,15 +101,13 @@ public class BoardFrame extends JFrame{
     }
     private void paint(Block block,Graphics g){
         int x=block.x*blockSize+xOffset,y=block.y*blockSize+yOffset;
-        if(x<-blockSize||getWidth()<x||y<-blockSize||getHeight()<y);
-        g.drawImage(images[block.getType().ordinal()][block.getValue()?1:0],x,y,blockSize,blockSize,null);
-        for(Board.Block target:block.getOutputs()){
-            int tx=target.x*blockSize+xOffset,ty=target.y*blockSize+yOffset,mx=x+tx>>1,my=x+ty>>1;
-            g.drawLine(x,y,mx,my);
-            g.setColor(LINK_LC);
-            g.setColor(LINK_RC);
-            g.drawLine(mx,my,tx,ty);
+        if(x<-blockSize||getWidth()<=x||y<-blockSize||getHeight()<=y) return;
+        Block.Type type=block.getType();
+        if(type==Block.Type.LINE){
+            boolean[] out=block.checkOutputs();
+
         }
+        else g.drawImage(IMAGES[type.ordinal()][block.getValue()?1:0],x,y,blockSize,blockSize,null);
     }
     private void paint(Block block){paint(block,graphics);}
     @Override

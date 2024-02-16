@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 public class Board{
     public interface ModifyListener<T extends ModifyListener<T>> extends Comparable<T>{void modifyBlock(Block block);}
-    public class Block implements Comparable<Block>{
+    public class Block{
         private static final int[][] POS_OFF={{1,0,1},{-1,0,0},{0,-1,3},{0,1,2}};
         public enum Type{
             VOID(),LINE(),NOT(),AND(),XOR(),SRC();
@@ -27,16 +27,17 @@ public class Board{
         public final int x,y;
         private AtomicInteger type,facing;
         private AtomicBoolean value;
-        private Block(Type type,boolean value,int x,int y){
+        private Block(Type type,boolean value,int x,int y,int facing){
             this.x=x;this.y=y;
             this.type=new AtomicInteger(type.ordinal());
-            this.facing=new AtomicInteger(0);
+            this.facing=new AtomicInteger(facing);
             this.value=new AtomicBoolean(value);
         }
         public Type getType(){return Type.valueOf(type.get());}
         public boolean setType(Type type){
             if(getType()==type) return false;
             this.type.set(type.ordinal());
+            if(type!=Type.LINE) facing.set(0);
             flush();callModifyListeners(this);
             return true;
         }
@@ -70,6 +71,25 @@ public class Board{
                 Block b=get(bx,by);
                 if(b.getType()==Type.LINE&&b.getFacing()==i) b.flush();
         }}
+        public boolean[] checkOutputs(){
+            boolean[] res={false,false,false,false};
+            if(getType()==Type.LINE){
+                int f=getFacing();
+                for(int i=0;i<4;i++){
+                    if(i==POS_OFF[f][2]) continue;
+                    int[] p=POS_OFF[i];
+                    int bx=x+p[0],by=y+p[1];
+                    if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
+                    Block b=get(bx,by);
+                    if(b.getType()==Type.LINE&&b.getFacing()==i) res[i]=true;
+            }}else for(int i=0;i<4;i++){
+                int[] p=POS_OFF[i];
+                int bx=x+p[0],by=y+p[1];
+                if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
+                Block b=get(bx,by);
+                if(b.getType()==Type.LINE&&b.getFacing()==i) res[i]=true;
+            }return res;
+        }
         public void flush(){
             threadPool.execute(new Runnable(){public void run(){
             Type t=getType();
@@ -104,9 +124,7 @@ public class Board{
             if(isEmpty()) return false;
             setType(Type.VOID);callModifyListeners(this);
             return true;
-        }
-        public int compareTo(Block block){return Integer.valueOf(y*getHeight()+x).compareTo(block.y*getHeight()+block.x);}
-    }
+    }}
     private ArrayList<ArrayList<Block>> blocks=new ArrayList<ArrayList<Block>>();
     private ConcurrentSkipListSet<ModifyListener<?>> modifyListeners=new ConcurrentSkipListSet<ModifyListener<?>>();
     private ExecutorService threadPool=Executors.newCachedThreadPool(new ThreadFactory(){
@@ -137,7 +155,7 @@ public class Board{
         for(int i=0;i<height;i++){
             blocks.add(new ArrayList<Block>());
             for(int j=0;j<width;j++){
-                blocks.getLast().add(new Block(Block.Type.valueOf(scanner.nextInt()),scanner.nextInt()==1,i,j));
+                blocks.getLast().add(new Block(Block.Type.valueOf(scanner.nextInt()),scanner.nextInt()==1,i,j,scanner.nextInt()));
             }
         }scanner.close();
         }catch(Exception e){e.printStackTrace();clear();return false;}
@@ -148,7 +166,7 @@ public class Board{
         for(int i=0;i<blocks.size();i++)
             for(int j=0;j<blocks.get(i).size();j++){
                 Block block=get(i,j);
-                writer.write(block.type.get()+" "+(block.value.get()?1:0)+" ");
+                writer.write(block.getType()+" "+(block.getValue()?1:0)+" "+block.getFacing()+" ");
             }
         }catch(Exception e){e.printStackTrace();return false;}
         return true;
@@ -157,7 +175,7 @@ public class Board{
         clear();
         for(int i=0;i<height;i++){
             blocks.add(new ArrayList<Block>());
-            for(int j=0;j<width;j++) blocks.getLast().add(new Block(Block.Type.VOID,false,i,j));
+            for(int j=0;j<width;j++) blocks.getLast().add(new Block(Block.Type.VOID,false,i,j,0));
         }
     }
 }
