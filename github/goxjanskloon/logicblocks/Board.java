@@ -13,15 +13,16 @@ public class Board{
     public class Block{
         private static final int[][] POS_OFF={{1,0,1},{-1,0,0},{0,-1,3},{0,1,2}};
         public enum Type{
-            VOID(),LINE(),NOT(),AND(),XOR(),SRC();
+            VOID(),OR(),NOT(),AND(),XOR(),SRC(),LINE();
             public static Type valueOf(int value){
                 switch(value){
                 case 0:return VOID;
-                case 1:return LINE;
+                case 1:return OR;
                 case 2:return NOT;
                 case 3:return AND;
                 case 4:return XOR;
                 case 5:return SRC;
+                case 6:return LINE;
                 default:return null;
         }}}
         public final int x,y;
@@ -45,6 +46,7 @@ public class Board{
         public int toNextFacing(){
             int c=getFacing();
             facing.set(c==3?c=0:++c);
+            flush();callModifyListeners(this);
             return c;
         }
         public boolean getValue(){return value.get();}
@@ -71,8 +73,8 @@ public class Board{
                 Block b=get(bx,by);
                 if(b.getType()==Type.LINE&&b.getFacing()==i) b.flush();
         }}
-        public boolean[] checkOutputs(){
-            boolean[] res={false,false,false,false};
+        public int[] checkOutputs(){
+            int[] res={0,0,0,0};
             if(getType()==Type.LINE){
                 int f=getFacing();
                 for(int i=0;i<4;i++){
@@ -81,13 +83,13 @@ public class Board{
                     int bx=x+p[0],by=y+p[1];
                     if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
                     Block b=get(bx,by);
-                    if(b.getType()==Type.LINE&&b.getFacing()==i) res[i]=true;
+                    if(b.getType()==Type.LINE&&b.getFacing()==i) res[i]=1;
             }}else for(int i=0;i<4;i++){
                 int[] p=POS_OFF[i];
                 int bx=x+p[0],by=y+p[1];
                 if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
                 Block b=get(bx,by);
-                if(b.getType()==Type.LINE&&b.getFacing()==i) res[i]=true;
+                if(b.getType()==Type.LINE&&b.getFacing()==i) res[i]=1;
             }return res;
         }
         public void flush(){
@@ -103,14 +105,15 @@ public class Board{
                 int bx=x+p[0],by=y+p[1];
                 if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
                 Block b=get(bx,by);
-                if(b.getType()==Type.LINE&&b.getFacing()==p[3]) in.add(b);
+                if(b.getType()==Type.LINE&&b.getFacing()==p[2]) in.add(b);
             }}else f=getFacing();
             switch(getType()){
             case LINE:{
-                int[] p=POS_OFF[POS_OFF[f][3]];
+                int[] p=POS_OFF[POS_OFF[f][2]];
                 int bx=x+p[0],by=y+p[1];
                 if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) break;
                 newValue=get(bx,by).getValue();}break;
+            case OR:newValue=in.size()==2&&(in.get(1).getValue()||in.get(2).getValue());break;
             case NOT:newValue=in.size()==1&&!in.get(1).getValue();break;
             case AND:newValue=in.size()==2&&in.get(1).getValue()&&in.get(2).getValue();break;
             case XOR:newValue=in.size()==2&&in.get(1).getValue()^in.get(2).getValue();break;
