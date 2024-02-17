@@ -92,10 +92,10 @@ public class BoardFrame extends JFrame{
                     board.resetWithSize(s.nextInt(),s.nextInt());
                     s.close();repaint();}break;
                 case'S':
-                    if(ke.isShiftDown()?saveAsFile():saveFile()) JOptionPane.showMessageDialog(BoardFrame.this,"Save failed!");
+                    if(ke.isShiftDown()?!saveAsFile():!saveFile()) JOptionPane.showMessageDialog(BoardFrame.this,"Save failed!");
                     repaint();break;
                 case'O':
-                    if(openFile()) JOptionPane.showMessageDialog(BoardFrame.this,"Open failed!");
+                    if(!openFile()) JOptionPane.showMessageDialog(BoardFrame.this,"Open failed!");
                     repaint();break;
                 case'Q':blockSize+=10;repaint();break;
                 case'E':if(blockSize>10)blockSize-=10;repaint();break;

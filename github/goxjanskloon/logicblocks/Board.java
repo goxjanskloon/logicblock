@@ -83,7 +83,8 @@ public class Board{
                     int bx=x+p[0],by=y+p[1];
                     if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
                     Block b=get(bx,by);
-                    if(b.getType()==Type.LINE&&b.getFacing()==i) res[i]=1;
+                    Type t=b.getType();
+                    if((t!=Type.LINE||b.getFacing()==i)&&t!=Type.VOID&&t!=Type.SRC) res[i]=1;
             }}else for(int i=0;i<4;i++){
                 int[] p=POS_OFF[i];
                 int bx=x+p[0],by=y+p[1];
