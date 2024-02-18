@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Board{
     public interface ModifyListener<T extends ModifyListener<T>> extends Comparable<T>{void modifyBlock(Block block);}
     public class Block{
-        private static final int[][] POS_OFF={{1,0,1},{-1,0,0},{0,-1,3},{0,1,2}};
+        private static final int[][] POS_OFF={{0,-1,1},{0,1,0},{-1,0,3},{1,0,2}};
         public enum Type{
             VOID(),OR(),NOT(),AND(),XOR(),SRC(),LINE();
             public static Type valueOf(int value){
@@ -38,8 +38,10 @@ public class Board{
         public boolean setType(Type type){
             if(getType()==type) return false;
             this.type.set(type.ordinal());
+            if(type==Type.VOID) value.set(false);
             if(type!=Type.LINE) facing.set(0);
             flush();callModifyListeners(this);
+            flushLines();
             return true;
         }
         public int getFacing(){return facing.get();}
@@ -47,6 +49,7 @@ public class Board{
             int c=getFacing();
             facing.set(c==3?c=0:++c);
             flush();callModifyListeners(this);
+            flushLines();
             return c;
         }
         public boolean getValue(){return value.get();}
@@ -57,41 +60,37 @@ public class Board{
             return result;
         }
         private void flushOutputs(){
-            if(getType()==Type.LINE){
-                int f=getFacing();
-                for(int i=0;i<4;i++){
-                    if(i==POS_OFF[f][2]) continue;
-                    int[] p=POS_OFF[i];
-                    int bx=x+p[0],by=y+p[1];
-                    if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
-                    Block b=get(bx,by);
-                    if(b.getType()==Type.LINE&&b.getFacing()==i) b.flush();
-            }}else for(int i=0;i<4;i++){
+            int[] c=checkOutputs();
+            for(int i=0;i<4;i++)
+                if(c[i]==1) get(x+POS_OFF[i][0],y+POS_OFF[i][1]).flush();
+        }
+        private void flushLines(){
+            for(int i=0;i<4;i++){
+                int bx=x+POS_OFF[i][0],by=y+POS_OFF[i][1];
+                if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
+                Block b=get(bx,by);
+                if(b.getType()==Type.LINE) callModifyListeners(b);
+        }}
+        public int[] checkOutputs(){
+            int[] res={0,0,0,0};
+            switch(getType()){
+            case VOID:break;
+            case LINE:for(int i=0,f=getFacing();i<4;i++){
+                if(i==POS_OFF[f][2]) continue;
                 int[] p=POS_OFF[i];
                 int bx=x+p[0],by=y+p[1];
                 if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
                 Block b=get(bx,by);
-                if(b.getType()==Type.LINE&&b.getFacing()==i) b.flush();
-        }}
-        public int[] checkOutputs(){
-            int[] res={0,0,0,0};
-            if(getType()==Type.LINE){
-                int f=getFacing();
-                for(int i=0;i<4;i++){
-                    if(i==POS_OFF[f][2]) continue;
-                    int[] p=POS_OFF[i];
-                    int bx=x+p[0],by=y+p[1];
-                    if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
-                    Block b=get(bx,by);
-                    Type t=b.getType();
-                    if((t!=Type.LINE||b.getFacing()==i)&&t!=Type.VOID&&t!=Type.SRC) res[i]=1;
-            }}else for(int i=0;i<4;i++){
+                Type t=b.getType();
+                if((t!=Type.LINE||b.getFacing()==i)&&t!=Type.VOID&&t!=Type.SRC) res[i]=1;
+            }break;
+            default:for(int i=0;i<4;i++){
                 int[] p=POS_OFF[i];
                 int bx=x+p[0],by=y+p[1];
                 if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
                 Block b=get(bx,by);
                 if(b.getType()==Type.LINE&&b.getFacing()==i) res[i]=1;
-            }return res;
+            }break;}return res;
         }
         public void flush(){
             threadPool.execute(new Runnable(){public void run(){
@@ -114,15 +113,15 @@ public class Board{
                 int bx=x+p[0],by=y+p[1];
                 if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) break;
                 newValue=get(bx,by).getValue();}break;
-            case OR:newValue=in.size()==2&&(in.get(1).getValue()||in.get(2).getValue());break;
-            case NOT:newValue=in.size()==1&&!in.get(1).getValue();break;
-            case AND:newValue=in.size()==2&&in.get(1).getValue()&&in.get(2).getValue();break;
-            case XOR:newValue=in.size()==2&&in.get(1).getValue()^in.get(2).getValue();break;
+            case OR:newValue=in.size()==2&&(in.get(0).getValue()||in.get(1).getValue());break;
+            case NOT:newValue=in.size()==1&&!in.get(0).getValue();break;
+            case AND:newValue=in.size()==2&&in.get(0).getValue()&&in.get(1).getValue();break;
+            case XOR:newValue=in.size()==2&&in.get(0).getValue()^in.get(1).getValue();break;
             case SRC:newValue=getValue();break;
             default:break;}
             if(value.compareAndSet(!newValue,newValue)){
-                flushOutputs();
                 callModifyListeners(Block.this);
+                flushOutputs();flushLines();
         }}});}
         public boolean clear(){
             if(isEmpty()) return false;
@@ -170,7 +169,7 @@ public class Board{
         for(int i=0;i<blocks.size();i++)
             for(int j=0;j<blocks.get(i).size();j++){
                 Block block=get(i,j);
-                writer.write(block.getType()+" "+(block.getValue()?1:0)+" "+block.getFacing()+" ");
+                writer.write(block.getType().ordinal()+" "+(block.getValue()?1:0)+" "+block.getFacing()+" ");
             }
         }catch(Exception e){e.printStackTrace();return false;}
         return true;
