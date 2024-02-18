@@ -13,12 +13,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import github.goxjanskloon.logicblocks.Board;
 import github.goxjanskloon.logicblocks.Board.Block;
-import github.goxjanskloon.utils.Images;
 public class BoardFrame extends JFrame{
     private class BlockModifyListener implements Board.ModifyListener<BlockModifyListener>{
         private static AtomicInteger count=new AtomicInteger(0);
@@ -36,47 +36,50 @@ public class BoardFrame extends JFrame{
     private Graphics graphics=null;
     private int xOffset=0,yOffset=0,blockSize=50,choosedType=0,xOfsOrg=0,yOfsOrg=0;
     private File file=null;
+    private static BufferedImage readImage(String path)throws IOException{
+        return ImageIO.read(Board.class.getClassLoader().getResource(path));
+    }
     static{try{
         IMAGES=new BufferedImage[][]{
-        {Images.read("img/VOID0.png"),Images.read("img/VOID1.png")},
-        {Images.read("img/OR0.png"),Images.read("img/OR1.png")},
-        {Images.read("img/NOT0.png"),Images.read("img/NOT1.png")},
-        {Images.read("img/AND0.png"),Images.read("img/AND1.png")},
-        {Images.read("img/XOR0.png"),Images.read("img/XOR1.png")},
-        {Images.read("img/SRC0.png"),Images.read("img/SRC1.png")}};
+        {readImage("img/VOID0.png"),readImage("img/VOID1.png")},
+        {readImage("img/OR0.png"),readImage("img/OR1.png")},
+        {readImage("img/NOT0.png"),readImage("img/NOT1.png")},
+        {readImage("img/AND0.png"),readImage("img/AND1.png")},
+        {readImage("img/XOR0.png"),readImage("img/XOR1.png")},
+        {readImage("img/SRC0.png"),readImage("img/SRC1.png")}};
         LINE_IMAGES=new BufferedImage[][][][][][]{
-        {{{{{Images.read("img/LINEU0.png"),Images.read("img/LINEU1.png")},
-        {Images.read("img/LINEUR0.png"),Images.read("img/LINEUR1.png")}},
-        {{Images.read("img/LINEUL0.png"),Images.read("img/LINEUL1.png")},
-        {Images.read("img/LINEULR0.png"),Images.read("img/LINEULR1.png")}}},{{{null,null},{null,null}},{{null,null},{null,null}}}},
-        {{{{Images.read("img/LINEUU0.png"),Images.read("img/LINEUU1.png")},
-        {Images.read("img/LINEUUR0.png"),Images.read("img/LINEUUR1.png")}},
-        {{Images.read("img/LINEUUL0.png"),Images.read("img/LINEUUL1.png")},
-        {Images.read("img/LINEUULR0.png"),Images.read("img/LINEUULR1.png")}}},{{{null,null},{null,null}},{{null,null},{null,null}}}}},
-        {{{{{Images.read("img/LINED0.png"),Images.read("img/LINED1.png")},
-        {Images.read("img/LINEDR0.png"),Images.read("img/LINEDR1.png")}},
-        {{Images.read("img/LINEDL0.png"),Images.read("img/LINEDL1.png")},
-        {Images.read("img/LINEDLR0.png"),Images.read("img/LINEDLR1.png")}}},
-        {{{Images.read("img/LINEDD0.png"),Images.read("img/LINEDD1.png")},
-        {Images.read("img/LINEDDR0.png"),Images.read("img/LINEDDR1.png")}},
-        {{Images.read("img/LINEDDL0.png"),Images.read("img/LINEDDL1.png")},
-        {Images.read("img/LINEDDLR0.png"),Images.read("img/LINEDDLR1.png")}}}},{{{{null,null},{null,null}},{{null,null},{null,null}}},{{{null,null},{null,null}},{{null,null},{null,null}}}}},
-        {{{{{Images.read("img/LINEL0.png"),Images.read("img/LINEL1.png")},{null,null}},
-        {{Images.read("img/LINELL0.png"),Images.read("img/LINELL1.png")},{null,null}}},
-        {{{Images.read("img/LINELD0.png"),Images.read("img/LINELD1.png")},{null,null}},
-        {{Images.read("img/LINELDL0.png"),Images.read("img/LINELDL1.png")},{null,null}}}},
-        {{{{Images.read("img/LINELU0.png"),Images.read("img/LINELU1.png")},{null,null}},
-        {{Images.read("img/LINELUL0.png"),Images.read("img/LINELUL1.png")},{null,null}}},
-        {{{Images.read("img/LINELUD0.png"),Images.read("img/LINELUD1.png")},{null,null}},
-        {{Images.read("img/LINELUDL0.png"),Images.read("img/LINELUDL1.png")},{null,null}}}}},
-        {{{{{Images.read("img/LINER0.png"),Images.read("img/LINER1.png")},
-        {Images.read("img/LINERR0.png"),Images.read("img/LINERR1.png")}},{{null,null},{null,null}}},
-        {{{Images.read("img/LINERD0.png"),Images.read("img/LINERD1.png")},
-        {Images.read("img/LINERDR0.png"),Images.read("img/LINERDR1.png")}},{{null,null},{null,null}}}},
-        {{{{Images.read("img/LINERU0.png"),Images.read("img/LINERU1.png")},
-        {Images.read("img/LINERUR0.png"),Images.read("img/LINERUR1.png")}},{{null,null},{null,null}}},
-        {{{Images.read("img/LINERUD0.png"),Images.read("img/LINERUD1.png")},
-        {Images.read("img/LINERUDR0.png"),Images.read("img/LINERUDR1.png")}},{{null,null},{null,null}}}}}};
+        {{{{{readImage("img/LINEU0.png"),readImage("img/LINEU1.png")},
+        {readImage("img/LINEUR0.png"),readImage("img/LINEUR1.png")}},
+        {{readImage("img/LINEUL0.png"),readImage("img/LINEUL1.png")},
+        {readImage("img/LINEULR0.png"),readImage("img/LINEULR1.png")}}},{{{null,null},{null,null}},{{null,null},{null,null}}}},
+        {{{{readImage("img/LINEUU0.png"),readImage("img/LINEUU1.png")},
+        {readImage("img/LINEUUR0.png"),readImage("img/LINEUUR1.png")}},
+        {{readImage("img/LINEUUL0.png"),readImage("img/LINEUUL1.png")},
+        {readImage("img/LINEUULR0.png"),readImage("img/LINEUULR1.png")}}},{{{null,null},{null,null}},{{null,null},{null,null}}}}},
+        {{{{{readImage("img/LINED0.png"),readImage("img/LINED1.png")},
+        {readImage("img/LINEDR0.png"),readImage("img/LINEDR1.png")}},
+        {{readImage("img/LINEDL0.png"),readImage("img/LINEDL1.png")},
+        {readImage("img/LINEDLR0.png"),readImage("img/LINEDLR1.png")}}},
+        {{{readImage("img/LINEDD0.png"),readImage("img/LINEDD1.png")},
+        {readImage("img/LINEDDR0.png"),readImage("img/LINEDDR1.png")}},
+        {{readImage("img/LINEDDL0.png"),readImage("img/LINEDDL1.png")},
+        {readImage("img/LINEDDLR0.png"),readImage("img/LINEDDLR1.png")}}}},{{{{null,null},{null,null}},{{null,null},{null,null}}},{{{null,null},{null,null}},{{null,null},{null,null}}}}},
+        {{{{{readImage("img/LINEL0.png"),readImage("img/LINEL1.png")},{null,null}},
+        {{readImage("img/LINELL0.png"),readImage("img/LINELL1.png")},{null,null}}},
+        {{{readImage("img/LINELD0.png"),readImage("img/LINELD1.png")},{null,null}},
+        {{readImage("img/LINELDL0.png"),readImage("img/LINELDL1.png")},{null,null}}}},
+        {{{{readImage("img/LINELU0.png"),readImage("img/LINELU1.png")},{null,null}},
+        {{readImage("img/LINELUL0.png"),readImage("img/LINELUL1.png")},{null,null}}},
+        {{{readImage("img/LINELUD0.png"),readImage("img/LINELUD1.png")},{null,null}},
+        {{readImage("img/LINELUDL0.png"),readImage("img/LINELUDL1.png")},{null,null}}}}},
+        {{{{{readImage("img/LINER0.png"),readImage("img/LINER1.png")},
+        {readImage("img/LINERR0.png"),readImage("img/LINERR1.png")}},{{null,null},{null,null}}},
+        {{{readImage("img/LINERD0.png"),readImage("img/LINERD1.png")},
+        {readImage("img/LINERDR0.png"),readImage("img/LINERDR1.png")}},{{null,null},{null,null}}}},
+        {{{{readImage("img/LINERU0.png"),readImage("img/LINERU1.png")},
+        {readImage("img/LINERUR0.png"),readImage("img/LINERUR1.png")}},{{null,null},{null,null}}},
+        {{{readImage("img/LINERUD0.png"),readImage("img/LINERUD1.png")},
+        {readImage("img/LINERUDR0.png"),readImage("img/LINERUDR1.png")}},{{null,null},{null,null}}}}}};
         }catch(IOException e){e.printStackTrace();}}
     public BoardFrame(){
         super();
