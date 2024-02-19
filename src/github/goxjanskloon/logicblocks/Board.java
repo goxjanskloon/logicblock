@@ -37,17 +37,21 @@ public class Board{
         public Type getType(){return Type.valueOf(type.get());}
         public boolean setType(Type type){
             if(getType()==type) return false;
-            this.type.set(type.ordinal());
-            if(type==Type.VOID) value.set(false);
-            if(type!=Type.LINE) facing.set(0);
-            flush();callModifyListeners(this);
+            value.set(false);facing.set(0);
+            this.type.set(Type.SRC.ordinal());flush();
+            this.type.set(type.ordinal());flush();callModifyListeners(this);
             flushLines();
             return true;
         }
         public int getFacing(){return facing.get();}
         public int toNextFacing(){
+            if(getType()!=Type.LINE) throw new UnsupportedOperationException("Calling toNextFacing() on a not LINE-Type Block");
             int c=getFacing();
             facing.set(c==3?c=0:++c);
+            for(int i=0;i<4;i++){
+                int bx=x+POS_OFF[i][0],by=y+POS_OFF[i][1];
+                if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
+                get(bx,by).flush();}
             flush();callModifyListeners(this);
             flushLines();
             return c;
@@ -69,7 +73,9 @@ public class Board{
                 int bx=x+POS_OFF[i][0],by=y+POS_OFF[i][1];
                 if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
                 Block b=get(bx,by);
-                if(b.getType()==Type.LINE) callModifyListeners(b);
+                if(b.getType()==Type.LINE)
+                    if(b.getFacing()==i) b.flush();
+                    else callModifyListeners(b);
         }}
         public int[] checkOutputs(){
             int[] res={0,0,0,0};
@@ -82,7 +88,7 @@ public class Board{
                 if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
                 Block b=get(bx,by);
                 Type t=b.getType();
-                if((t!=Type.LINE||b.getFacing()==i)&&t!=Type.VOID&&t!=Type.SRC) res[i]=1;
+                if((t!=Type.LINE||(b.getFacing()==i&&i!=POS_OFF[f][2]))&&t!=Type.VOID&&t!=Type.SRC) res[i]=1;
             }break;
             default:for(int i=0;i<4;i++){
                 int[] p=POS_OFF[i];
@@ -112,7 +118,11 @@ public class Board{
                 int[] p=POS_OFF[POS_OFF[f][2]];
                 int bx=x+p[0],by=y+p[1];
                 if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) break;
-                newValue=get(bx,by).getValue();}break;
+                Block b=get(bx,by);
+                switch(b.getType()){
+                case VOID:break;
+                case LINE:if(b.getFacing()==POS_OFF[f][2]) break;
+                default:newValue=get(bx,by).getValue();break;}}break;
             case OR:newValue=in.size()==2&&(in.get(0).getValue()||in.get(1).getValue());break;
             case NOT:newValue=in.size()==1&&!in.get(0).getValue();break;
             case AND:newValue=in.size()==2&&in.get(0).getValue()&&in.get(1).getValue();break;
@@ -121,12 +131,11 @@ public class Board{
             default:break;}
             if(value.compareAndSet(!newValue,newValue)){
                 callModifyListeners(Block.this);
-                flushOutputs();flushLines();
+                flushOutputs();
         }}});}
         public boolean clear(){
             if(isEmpty()) return false;
-            setType(Type.VOID);callModifyListeners(this);
-            return true;
+            return setType(Type.VOID);
     }}
     private ArrayList<ArrayList<Block>> blocks=new ArrayList<ArrayList<Block>>();
     private ConcurrentSkipListSet<ModifyListener<?>> modifyListeners=new ConcurrentSkipListSet<ModifyListener<?>>();
@@ -171,6 +180,7 @@ public class Board{
                 Block block=get(i,j);
                 writer.write(block.getType().ordinal()+" "+(block.getValue()?1:0)+" "+block.getFacing()+" ");
             }
+        writer.write("\n");
         }catch(Exception e){e.printStackTrace();return false;}
         return true;
     }
