@@ -101,7 +101,8 @@ public class BoardFrame extends JFrame{
                     if(!openFile()) JOptionPane.showMessageDialog(BoardFrame.this,"Open failed!");
                     repaint();break;
                 case'Q':blockSize+=10;repaint();break;
-                case'E':if(blockSize>10)blockSize-=10;repaint();break;
+                case'E':if(blockSize>10){blockSize-=10;repaint();}break;
+                case'X':if(!board.isEmpty()){board.clear();repaint();}break;
                 default:{int c=ke.getKeyCode();if('1'<=c&&c<='7')choosedType=c-'1';}break;
         }}});
         addMouseListener(new MouseAdapter(){
