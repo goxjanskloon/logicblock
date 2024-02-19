@@ -197,7 +197,7 @@ public class BoardFrame extends JFrame{
     }
     public static void main(String[] args){
         BoardFrame bf=new BoardFrame();
-        bf.setTitle("LogicCircuits");
+        bf.setTitle("LogicBlocks");
         bf.setSize(1000,600);
         bf.setBackground(Color.WHITE);
         bf.setDefaultCloseOperation(EXIT_ON_CLOSE);
