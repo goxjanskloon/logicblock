@@ -3,8 +3,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -111,7 +111,7 @@ public class Board{
                 int bx=x+p[0],by=y+p[1];
                 if(bx<0||getWidth()<=bx||by<0||getHeight()<=by) continue;
                 Block b=get(bx,by);
-                if(b.getType()==Type.LINE&&b.getFacing()==p[2]) in.add(b);
+                if(b.getType()==Type.LINE&&b.getFacing()!=POS_OFF[p[2]][2]) in.add(b);
             }}else f=getFacing();
             switch(getType()){
             case LINE:{
@@ -139,8 +139,11 @@ public class Board{
     }}
     private ArrayList<ArrayList<Block>> blocks=new ArrayList<ArrayList<Block>>();
     private ConcurrentSkipListSet<ModifyListener<?>> modifyListeners=new ConcurrentSkipListSet<ModifyListener<?>>();
-    private ExecutorService threadPool=Executors.newCachedThreadPool(new ThreadFactory(){
-        public Thread newThread(Runnable r){Thread thread=new Thread(r);thread.setDaemon(true);return thread;}});
+    private ExecutorService threadPool=newThreadPool();
+    private ExecutorService newThreadPool(){
+        return Executors.newCachedThreadPool(new ThreadFactory(){
+            public Thread newThread(Runnable r){Thread thread=new Thread(r);thread.setDaemon(true);return thread;}});
+    }
     public Board(){}
     public Board(int width,int height){resetWithSize(width, height);}
     public boolean addModifyListener(ModifyListener<?> modifyListener){return modifyListeners.add(modifyListener);}
@@ -159,7 +162,10 @@ public class Board{
         silence();blocks.clear();
         return true;
     }
-    public void silence(){threadPool.shutdownNow();}
+    public void silence(){
+        threadPool.shutdownNow();
+        threadPool=newThreadPool();
+    }
     public boolean loadFrom(Readable reader){
         clear();try{
         Scanner scanner=new Scanner(reader);
@@ -189,6 +195,5 @@ public class Board{
         for(int i=0;i<height;i++){
             blocks.add(new ArrayList<Block>());
             for(int j=0;j<width;j++) blocks.getLast().add(new Block(Block.Type.VOID,false,i,j,0));
-        }
-    }
+    }}
 }
