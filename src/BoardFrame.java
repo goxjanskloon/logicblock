@@ -11,7 +11,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
@@ -91,9 +90,9 @@ public class BoardFrame extends JFrame{
                 if(!ke.isControlDown()) return;
                 switch(ke.getKeyCode()){
                 case'N':{
-                    Scanner s=new Scanner(System.in);
-                    board.resetWithSize(s.nextInt(),s.nextInt());
-                    s.close();repaint();}break;
+                    board.resetWithSize(Integer.valueOf(JOptionPane.showInputDialog(BoardFrame.this,"Width:","New Board",JOptionPane.QUESTION_MESSAGE)),
+                                        Integer.valueOf(JOptionPane.showInputDialog(BoardFrame.this,"Height:","New Board",JOptionPane.QUESTION_MESSAGE)));
+                    repaint();file=null;}break;
                 case'S':
                     if(ke.isShiftDown()?!saveAsFile():!saveFile()) JOptionPane.showMessageDialog(BoardFrame.this,"Save failed!");
                     repaint();break;
@@ -101,11 +100,10 @@ public class BoardFrame extends JFrame{
                     if(!openFile()){
                         JOptionPane.showMessageDialog(BoardFrame.this,"Open failed!");
                         board.clear();
-                    }
-                    repaint();break;
+                    }repaint();break;
                 case'Q':blockSize+=10;repaint();break;
                 case'E':if(blockSize>10){blockSize-=10;repaint();}break;
-                case'X':if(!board.isEmpty()){board.clear();repaint();}break;
+                case'X':if(!board.isEmpty()){board.clear();repaint();file=null;}break;
                 default:{int c=ke.getKeyCode();if('1'<=c&&c<='7')choosedType=c-'1';}break;
         }}});
         addMouseListener(new MouseAdapter(){
@@ -153,7 +151,7 @@ public class BoardFrame extends JFrame{
         Image image=createImage(getWidth(),getHeight());
         Graphics ig=image.getGraphics();
         int xl=-xOffset/blockSize,yl=-yOffset/blockSize,xr=xl+getWidth()/blockSize,yr=yl+getHeight()/blockSize;
-        if(xl<0) xl=0;if(yl<0) yl=0;if(xr>=board.getWidth()) xr=board.getWidth()-1;if(yr>=board.getHeight()) yr=board.getHeight()-1;
+        if(xl<0)xl=0;if(yl<0)yl=0;if(xr>=board.getWidth())xr=board.getWidth()-1;if(yr>=board.getHeight())yr=board.getHeight()-1;
         for(int i=yl;i<=yr;i++)
             for(int j=xl;j<=xr;j++) paint(board.get(j,i),ig);
         g.drawImage(image,0,0,null);

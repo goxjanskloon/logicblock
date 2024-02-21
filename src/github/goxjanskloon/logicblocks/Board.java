@@ -153,10 +153,10 @@ public class Board{
         modifyListeners.clear();return true;
     }
     private void callModifyListeners(Block block){for(ModifyListener<?> ml:modifyListeners) ml.modifyBlock(block);}
-    public Block get(int x,int y){return blocks.get(x).get(y);}
+    public Block get(int x,int y){return blocks.get(y).get(x);}
     public boolean isEmpty(){return blocks.isEmpty();}
-    public int getWidth(){return blocks.size();}
-    public int getHeight(){return isEmpty()?0:blocks.getFirst().size();}
+    public int getWidth(){return isEmpty()?0:blocks.getFirst().size();}
+    public int getHeight(){return blocks.size();}
     public boolean clear(){
         if(isEmpty()) return false;
         silence();blocks.clear();
@@ -165,6 +165,7 @@ public class Board{
     public void silence(){
         threadPool.shutdownNow();
         threadPool=newThreadPool();
+        System.gc();
     }
     public boolean loadFrom(Readable reader){
         clear();try{
@@ -173,17 +174,17 @@ public class Board{
         for(int i=0;i<height;i++){
             blocks.add(new ArrayList<Block>());
             for(int j=0;j<width;j++){
-                blocks.getLast().add(new Block(Block.Type.valueOf(scanner.nextInt()),scanner.nextInt()==1,i,j,scanner.nextInt()));
+                blocks.getLast().add(new Block(Block.Type.valueOf(scanner.nextInt()),scanner.nextInt()==1,j,i,scanner.nextInt()));
             }
         }scanner.close();
         }catch(Exception e){e.printStackTrace();clear();return false;}
         return true;
     }
     public boolean exportTo(Writer writer){try{
-        writer.write(blocks.size()+" "+blocks.getFirst().size()+" ");
+        writer.write(blocks.getFirst().size()+" "+blocks.size()+" ");
         for(int i=0;i<blocks.size();i++)
             for(int j=0;j<blocks.get(i).size();j++){
-                Block block=get(i,j);
+                Block block=get(j,i);
                 writer.write(block.getType().ordinal()+" "+(block.getValue()?1:0)+" "+block.getFacing()+" ");
             }
         writer.write("\n");
@@ -194,6 +195,6 @@ public class Board{
         clear();
         for(int i=0;i<height;i++){
             blocks.add(new ArrayList<Block>());
-            for(int j=0;j<width;j++) blocks.getLast().add(new Block(Block.Type.VOID,false,i,j,0));
+            for(int j=0;j<width;j++) blocks.getLast().add(new Block(Block.Type.VOID,false,j,i,0));
     }}
 }
