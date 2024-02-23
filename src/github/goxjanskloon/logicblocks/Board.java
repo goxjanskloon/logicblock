@@ -37,10 +37,13 @@ public class Board{
         public Type getType(){return Type.valueOf(type.get());}
         public boolean setType(Type type){
             if(getType()==type) return false;
+            int[] oldOut=checkOutputs(),newOut;
             value.set(false);facing.set(0);
-            this.type.set(Type.SRC.ordinal());flush();
-            this.type.set(type.ordinal());flush();callModifyListeners(this);
-            flushLines();
+            this.type.set(type.ordinal());flush();
+            newOut=checkOutputs();
+            for(int i=0;i<4;i++)
+                if(oldOut[i]==1&&newOut[i]==0) get(x+POS_OFF[i][0],y+POS_OFF[i][1]).flush();
+            callModifyListeners(this);flushLines();
             return true;
         }
         public int getFacing(){return facing.get();}
