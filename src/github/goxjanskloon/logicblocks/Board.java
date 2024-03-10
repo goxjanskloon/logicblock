@@ -162,7 +162,7 @@ public class Board{
     public int getHeight(){return blocks.size();}
     public boolean clear(){
         if(isEmpty()) return false;
-        silence();blocks.clear();
+        silence();blocks=new ArrayList<ArrayList<Block>>();
         return true;
     }
     public void silence(){
