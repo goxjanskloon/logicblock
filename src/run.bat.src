@@ -1,0 +1,6 @@
+@echo off
+cd /d %~dp0
+if "%1"=="hide" goto CmdBegin
+start mshta vbscript:createobject("wscript.shell").run("""%~0"" hide",0)(window.close)&&exit
+:CmdBegin
+jre\bin\java -jar LogicBlocks.jar
