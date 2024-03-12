@@ -172,7 +172,7 @@ public class BoardFrame extends JFrame{
             if(JOptionPane.showConfirmDialog(BoardFrame.this,helpURL+"\n在浏览器中打开吗?","帮助",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION)
                 try{Desktop.getDesktop().browse(new URI(helpURL));
                 }catch(IOException|URISyntaxException e){e.printStackTrace();}}},
-        new ActionListener(){public void actionPerformed(ActionEvent ae){JOptionPane.showMessageDialog(BoardFrame.this,"逻辑模块(LogicBlocks) alpha-v0.1.2\n作者: goxjanskloon <goxjanskloon@outlook.com>\n仓库URL: https://github.com/goxjanskloon/LogicBlocks \n协议: https://github.com/goxjanskloon/LogicBlocks/blob/main/LICENSE \nJava版本: "+System.getProperty("java.vm.name")+" "+System.getProperty("java.version"),"关于",JOptionPane.INFORMATION_MESSAGE);}}}
+        new ActionListener(){public void actionPerformed(ActionEvent ae){JOptionPane.showMessageDialog(BoardFrame.this,"逻辑模块(LogicBlocks) v0.1.2-alpha\n作者: goxjanskloon <goxjanskloon@outlook.com>\n仓库URL: https://github.com/goxjanskloon/LogicBlocks \n协议: https://github.com/goxjanskloon/LogicBlocks/blob/main/LICENSE \nJava版本: "+System.getProperty("java.vm.name")+" "+System.getProperty("java.version"),"关于",JOptionPane.INFORMATION_MESSAGE);}}}
     };
     private static int[] mnemonics={KeyEvent.VK_F,KeyEvent.VK_V,KeyEvent.VK_T,KeyEvent.VK_H};
     private static BufferedImage readImage(String path){
