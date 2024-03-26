@@ -3,11 +3,12 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.ConcurrentSkipListSet;
 public class Board{
-    public interface ModifyListener<T extends ModifyListener<T>> extends Comparable<T>{void modified(Block b);}
-    private ConcurrentSkipListSet<ModifyListener<?>> modifyListeners;
+    private ArrayList<ArrayList<Block>> blocks;
+    private ConcurrentSkipListSet<ModifyListener<?>> modifyListeners=new ConcurrentSkipListSet<>();
     public boolean addModifyListener(ModifyListener<?> l){return modifyListeners.add(l);}
     public boolean removeModifyListener(ModifyListener<?> l){return modifyListeners.remove(l);}
     public void callModifyListeners(Block b){for(ModifyListener<?> l:modifyListeners) l.modified(b);}
+    public interface ModifyListener<T extends ModifyListener<T>> extends Comparable<T>{void modified(Block b);}
     public enum Direction{
         UP(0,-1),RIGHT(1,0),DOWN(0,1),LEFT(-1,0);
         public final int xOffset,yOffset;
@@ -33,7 +34,6 @@ public class Board{
         protected Block(int x,int y){this.x=x;this.y=y;}
         public Block get(Direction d){return Board.this.get(x+d.xOffset,y+d.yOffset);}
     }
-    private ArrayList<ArrayList<Block>> blocks=new ArrayList<>();
     public Block get(int x,int y){return blocks.get(y).get(x);}
     public class Void extends Block{Void(int x,int y){super(x,y);}}
     public abstract class ValuedBlock extends Block{
@@ -49,16 +49,14 @@ public class Board{
         private Direction direction;
         private Line(int x,int y,boolean value,Direction d){super(x,y,value);direction=d;}
         public Direction getDirection(){return direction;}
-        public void setDirection(Direction d){
-            if(direction!=d){direction=d;update(true);}
+        public void setDirection(Direction d){if(direction!=d){direction=d;update(true);}}
+        public void isOutput(Direction d){
+            if()
         }
-        public
     }
     public class Src extends ValuedBlock{
         private Src(int x,int y,boolean value){super(x,y,value);}
-        public void setValue(boolean value){
-            if(this.value.compareAndSet(!value,value)) update(true);
-        }
+        public void setValue(boolean value){if(this.value.compareAndSet(!value,value)) update(true);}
         @Override
         public void update(boolean alwaysCallModifyListeners){
             if(alwaysCallModifyListeners) callModifyListeners(this);
