@@ -1,17 +1,17 @@
-package github.goxjanskloon.logicblock;
+package io.goxjanskloon.logicblock.block;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.Collection;
-public abstract class Operator implements InnerInputable<Operator>,InnerOutputable<Operator>{
+public abstract class Operator implements InnerInputable,InnerOutputable{
     private AtomicBoolean value=new AtomicBoolean(false);
-    private ConcurrentSkipListSet<InnerOutputable<?>> inputs=new ConcurrentSkipListSet<>();
-    private ConcurrentSkipListSet<InnerInputable<?>> outputs=new ConcurrentSkipListSet<>();
+    private ConcurrentSkipListSet<InnerOutputable> inputs=new ConcurrentSkipListSet<>();
+    private ConcurrentSkipListSet<InnerInputable> outputs=new ConcurrentSkipListSet<>();
     protected abstract int getRequiredInputSize();
-    @Override public boolean acceptAddingOutput(InnerInputable<?> i){return outputs.add(i);}
+    @Override public boolean acceptAddingOutput(InnerInputable i){return outputs.add(i);}
     @Override public boolean acceptRemovingOutput(Inputable i){return outputs.remove(i);}
     @Override public boolean addOutput(Inputable i){
-        if(outputs.add((InnerInputable<?>)i)){
-            if(!((InnerInputable<?>)i).acceptAddingInput(this)){
+        if(outputs.add((InnerInputable)i)){
+            if(!((InnerInputable)i).acceptAddingInput(this)){
                 outputs.remove(i);
                 return false;
             }
@@ -22,17 +22,17 @@ public abstract class Operator implements InnerInputable<Operator>,InnerOutputab
     }
     @Override public boolean removeOutput(Inputable i){
         if(outputs.remove(i)){
-            if(!((InnerInputable<?>)i).acceptRemovingInput(this)) return false;
+            if(!((InnerInputable)i).acceptRemovingInput(this)) return false;
             update();
             return true;
         }
         return false;
     }
-    @Override public boolean acceptAddingInput(InnerOutputable<?> o){return inputs.add(o);}
+    @Override public boolean acceptAddingInput(InnerOutputable o){return inputs.add(o);}
     @Override public boolean acceptRemovingInput(Outputable o){return inputs.remove(o);}
     @Override public boolean addInput(Outputable o){
-        if(inputs.add((InnerOutputable<?>)o)){
-            if(!((InnerOutputable<?>)o).acceptAddingOutput(this)){
+        if(inputs.add((InnerOutputable)o)){
+            if(!((InnerOutputable)o).acceptAddingOutput(this)){
                 inputs.remove(o);
                 return false;
             }
@@ -43,7 +43,7 @@ public abstract class Operator implements InnerInputable<Operator>,InnerOutputab
     }
     @Override public boolean removeInput(Outputable o){
         if(inputs.remove(o)){
-            if(!((InnerOutputable<?>)o).acceptRemovingOutput(this)) return false;
+            if(!((InnerOutputable)o).acceptRemovingOutput(this)) return false;
             update();
             return true;
         }

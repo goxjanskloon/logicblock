@@ -1,4 +1,4 @@
-package github.goxjanskloon.logicblock;
+package io.goxjanskloon.logicblock.block;
 import java.util.Collection;
 import java.util.Iterator;
 public abstract class UnaryOperator extends Operator{

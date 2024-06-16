@@ -1,4 +1,4 @@
-package github.goxjanskloon.logicblock;
+package io.goxjanskloon.logicblock;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,6 +8,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Supplier;
+import io.goxjanskloon.logicblock.block.BlockShell;
+import io.goxjanskloon.logicblock.block.Outputable;
 public class Board{
     public interface ModifyListener<T extends ModifyListener<T>> extends Comparable<T>{
         void modified(Outputable o);
