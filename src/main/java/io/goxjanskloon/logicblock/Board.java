@@ -2,28 +2,34 @@ package io.goxjanskloon.logicblock;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import io.goxjanskloon.logicblock.block.BlockShell;
+import io.goxjanskloon.logicblock.block.OperatorAnd;
+import io.goxjanskloon.logicblock.block.OperatorNot;
+import io.goxjanskloon.logicblock.block.OperatorOr;
+import io.goxjanskloon.logicblock.block.OperatorXor;
 import io.goxjanskloon.logicblock.block.Outputable;
 public class Board{
-    public interface ModifyListener<T extends ModifyListener<T>> extends Comparable<T>{
+    public interface ModifyListener extends Comparable<ModifyListener>{
         void modified(Outputable o);
     }
     private class Block extends BlockShell{
-        @Override public void update(){callAllModifyListeners(proxy);}
+        @Override public void update(){super.update();callAllModifyListeners(proxy);}
     }
     public static final List<Class<? extends Outputable>> types=Arrays.<Class<? extends Outputable>>asList(null,OperatorNot.class,OperatorOr.class,OperatorAnd.class,OperatorXor.class);
     private ArrayList<ArrayList<Block>> blocks=new ArrayList<ArrayList<Block>>();
-    private ConcurrentSkipListSet<ModifyListener<?>> modifyListeners=new ConcurrentSkipListSet<>();
+    private ConcurrentSkipListSet<ModifyListener> modifyListeners=new ConcurrentSkipListSet<>();
     private ExecutorService threadPool=newThreadPool();
     public Board(){}
     public Board(int width,int height){resetToSize(width,height);}
-    public Outputable get(int x,int y){return blocks.get(y).get(x).proxy;}
+    public Block get(int x,int y){return blocks.get(y).get(x);}
     public boolean isEmpty(){return blocks.isEmpty();}
     public int getWidth(){return isEmpty()?0:blocks.getFirst().size();}
     public int getHeight(){return blocks.size();}
@@ -43,7 +49,7 @@ public class Board{
             public Thread newThread(Runnable r){Thread thread=new Thread(r);thread.setDaemon(true);return thread;}});
     }
     private void callAllModifyListeners(Outputable o){
-        threadPool.execute(()->{for(ModifyListener<?> l:modifyListeners) threadPool.execute(()->l.modified(o));});
+        threadPool.execute(()->{for(ModifyListener l:modifyListeners) threadPool.execute(()->l.modified(o));});
     }
     public boolean loadFrom(Readable reader){
         clear();try{
@@ -52,8 +58,9 @@ public class Board{
         for(int i=0;i<height;i++){
             blocks.add(new ArrayList<Block>());
             for(int j=0;j<width;j++){
-                Class<? extends Outputable>
-                blocks.getLast().add();
+                Class<? extends Outputable> type=types.get(scanner.nextInt());
+                if(type==null) block.getLast.add()
+                blocks.getLast().add);
             }
         }scanner.close();
         }catch(Exception e){e.printStackTrace();clear();return false;}
