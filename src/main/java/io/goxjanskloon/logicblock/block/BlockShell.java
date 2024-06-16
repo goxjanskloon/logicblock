@@ -1,5 +1,5 @@
 package io.goxjanskloon.logicblock.block;
-public class BlockShell implements InnerInputable{
+public class BlockShell implements Inputable{
     protected Outputable proxy=null;
     public BlockShell(){}
     public BlockShell(Outputable o){connect(o);}
@@ -18,7 +18,7 @@ public class BlockShell implements InnerInputable{
     }
     public boolean reconnect(Outputable o){return disconnect()&&connect(o);}
     @Override public boolean addInput(Outputable o){throw new UnsupportedOperationException();}
-    @Override public boolean acceptAddingInput(InnerOutputable o){return true;}
+    @Override public boolean acceptAddingInput(Outputable o){return true;}
     @Override public boolean removeInput(Outputable o){throw new UnsupportedOperationException();}
     @Override public boolean acceptRemovingInput(Outputable o){return true;}
     @Override public void flush(){update();}

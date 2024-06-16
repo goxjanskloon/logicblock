@@ -21,6 +21,8 @@ public class Board{
         void modified(Outputable o);
     }
     private class Block extends BlockShell{
+        Block(){}
+        Block(Outputable o){super(o);}
         @Override public void update(){super.update();callAllModifyListeners(proxy);}
     }
     public static final List<Class<? extends Outputable>> types=Arrays.<Class<? extends Outputable>>asList(null,OperatorNot.class,OperatorOr.class,OperatorAnd.class,OperatorXor.class);
@@ -59,8 +61,12 @@ public class Board{
             blocks.add(new ArrayList<Block>());
             for(int j=0;j<width;j++){
                 Class<? extends Outputable> type=types.get(scanner.nextInt());
-                if(type==null) block.getLast.add()
-                blocks.getLast().add);
+                Block block=null;
+                if(type==null) block=new Block(null);
+                else{
+                    //block=new Block
+                }
+                blocks.getLast().add(block);
             }
         }scanner.close();
         }catch(Exception e){e.printStackTrace();clear();return false;}
@@ -71,7 +77,7 @@ public class Board{
         for(int i=0;i<blocks.size();i++)
             for(int j=0;j<blocks.get(i).size();j++){
                 Block block=get(j,i);
-                writer.write(block.getType().ordinal()+" "+(block.getValue()?1:0)+" "+block.getFacing()+" ");
+                //writer.write(block.getType().ordinal()+" "+(block.getValue()?1:0)+" "+block.getFacing()+" ");
             }
         writer.write("\n");
         }catch(Exception e){e.printStackTrace();return false;}
@@ -81,6 +87,6 @@ public class Board{
         clear();
         for(int i=0;i<height;i++){
             blocks.add(new ArrayList<Block>());
-            for(int j=0;j<width;j++) blocks.getLast().add(new Block(Block.Type.VOID,false,j,i,0));
+            //for(int j=0;j<width;j++) blocks.getLast().add(new Block(Block.Type.VOID,false,j,i,0));
     }}
 }

@@ -1,11 +1,9 @@
 package io.goxjanskloon.logicblock.block;
 import io.goxjanskloon.util.HashComparable;
-public interface Outputable{
+public interface Outputable extends HashComparable{
     boolean addOutput(Inputable i);
     boolean removeOutput(Inputable i);
-    boolean getValue();
-}
-interface InnerOutputable extends Outputable,HashComparable{
-    boolean acceptAddingOutput(InnerInputable i);
+    boolean acceptAddingOutput(Inputable i);
     boolean acceptRemovingOutput(Inputable i);
+    boolean getValue();
 }
