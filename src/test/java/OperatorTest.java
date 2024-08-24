@@ -4,6 +4,8 @@ import io.goxjanskloon.logicblock.block.OperatorNot;
 import io.goxjanskloon.logicblock.block.OperatorOr;
 import io.goxjanskloon.logicblock.block.OperatorXor;
 import io.goxjanskloon.logicblock.block.SignalSource;
+
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 public class OperatorTest{
     @Test public void testOperatorNot(){
@@ -12,18 +14,18 @@ public class OperatorTest{
         op.addInput(s);
         assertTrue(op.getValue());
         s.setValue(true);
-        assertTrue(!op.getValue());
+        assertFalse(op.getValue());
     }
     @Test public void testOperatorOr(){
         OperatorOr op=new OperatorOr();
         SignalSource s1=new SignalSource(),s2=new SignalSource();
         op.addInput(s1);
         op.addInput(s2);
-        assertTrue(!op.getValue());
+        assertFalse(op.getValue());
         s1.setValue(true);
         assertTrue(op.getValue());
         s1.setValue(false);
-        assertTrue(!op.getValue());
+        assertFalse(op.getValue());
         s2.setValue(true);
         assertTrue(op.getValue());
         s1.setValue(true);
@@ -34,13 +36,13 @@ public class OperatorTest{
         SignalSource s1=new SignalSource(),s2=new SignalSource();
         op.addInput(s1);
         op.addInput(s2);
-        assertTrue(!op.getValue());
+        assertFalse(op.getValue());
         s1.setValue(true);
-        assertTrue(!op.getValue());
+        assertFalse(op.getValue());
         s1.setValue(false);
-        assertTrue(!op.getValue());
+        assertFalse(op.getValue());
         s2.setValue(true);
-        assertTrue(!op.getValue());
+        assertFalse(op.getValue());
         s1.setValue(true);
         assertTrue(op.getValue());
     }
@@ -50,15 +52,15 @@ public class OperatorTest{
         SignalSource s1=new SignalSource(),s2=new SignalSource();
         op.addInput(s1);
         op.addInput(s2);
-        assertTrue(!op.getValue());
+        assertFalse(op.getValue());
         s1.setValue(true);
         assertTrue(op.getValue());
         s1.setValue(false);
-        assertTrue(!op.getValue());
+        assertFalse(op.getValue());
         s2.setValue(true);
         assertTrue(op.getValue());
         s1.setValue(true);
-        assertTrue(!op.getValue());
+        assertFalse(op.getValue());
     }
     @Test public void testOperators(){
         SignalSource[] x=new SignalSource[5+1];
@@ -86,7 +88,7 @@ public class OperatorTest{
         x[4].setValue(true);
         x[5].setValue(true);
         x[1].setValue(!x[1].getValue());
-        assertTrue(!and[1].getValue());
+        assertFalse(and[1].getValue());
         x[1].setValue(!x[1].getValue());
         x[3].setValue(!x[3].getValue());
         assertTrue(and[1].getValue());
