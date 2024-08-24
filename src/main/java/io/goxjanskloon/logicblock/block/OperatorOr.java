@@ -1,7 +1,9 @@
 package io.goxjanskloon.logicblock.block;
-public class OperatorOr extends BinaryOperator{
+public class OperatorOr extends Operator{
     @Override public boolean calculate(){
-        Outputable[] inputs=this.getInputs();
-        return inputs[0].getValue()||inputs[1].getValue();
+        boolean result=false;
+        for(Outputable o:getInputs())
+            result|=o.getValue();
+        return result;
     }
 }
