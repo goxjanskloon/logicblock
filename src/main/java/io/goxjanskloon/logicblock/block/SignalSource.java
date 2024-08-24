@@ -1,19 +1,45 @@
 package io.goxjanskloon.logicblock.block;
-import java.util.concurrent.ConcurrentSkipListSet;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 public class SignalSource implements Outputable{
-    private AtomicBoolean value;
-    private ConcurrentSkipListSet<Inputable> outputs=new ConcurrentSkipListSet<>();
-    public SignalSource(){this(false);}
-    public SignalSource(boolean initValue){value=new AtomicBoolean(false);}
-    @Override public boolean addOutput(Inputable i){return outputs.add(i);}
-    @Override public boolean removeOutput(Inputable i){return outputs.remove(i);}
-    @Override public boolean getValue(){return value.get();}
-    public void setValue(boolean newValue){
-        if(value.compareAndSet(!newValue,newValue)) update();
+    private final AtomicBoolean value;
+    private final Set<Inputable> outputs= Collections.synchronizedSet(new HashSet<>());
+    public SignalSource(){
+        this(false);
     }
-    public void update(){for(Inputable i:outputs) i.update();}
-    public void flush(){for(Inputable i:outputs) i.flush();}
-    @Override public boolean acceptAddingOutput(Inputable i){return outputs.add(i);}
-    @Override public boolean acceptRemovingOutput(Inputable i){return outputs.remove(i);}
+    public SignalSource(boolean value){
+        this.value=new AtomicBoolean(value);
+    }
+    @Override public boolean addOutput(Inputable i){
+        if(i.addInputRaw(this)&&addOutputRaw(i)){
+            i.update();
+            return true;
+        }else return false;
+    }
+    @Override public boolean removeOutput(Inputable i){
+        if(i.removeInputRaw(this)&&removeOutputRaw(i)){
+            i.update();
+            return true;
+        }else return false;
+    }
+    @Override public boolean addOutputRaw(Inputable i){
+        return outputs.add(i);
+    }
+    @Override public boolean removeOutputRaw(Inputable i){
+        return outputs.remove(i);
+    }
+    @Override public boolean getValue(){
+        return value.get();
+    }
+    public void setValue(boolean newValue){
+        if(value.compareAndSet(!newValue,newValue))
+            update();
+    }
+    public void update(){
+        for(Inputable i:outputs)
+            i.update();
+    }
 }

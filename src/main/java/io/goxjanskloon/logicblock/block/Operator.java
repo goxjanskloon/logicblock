@@ -1,74 +1,49 @@
 package io.goxjanskloon.logicblock.block;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Collection;
+import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class Operator implements Inputable,Outputable{
-    private AtomicBoolean value;
-    private Set<Outputable> inputs;
-    private Set<Inputable> outputs;
-    protected Operator(boolean initValue,Collection<? extends Outputable> initInputs,Collection<? extends Inputable> initOutputs){
-        value=new AtomicBoolean(initValue);
-        inputs=new HashSet<>(initInputs);
-        outputs=new HashSet<>(initOutputs);
-    }
-    protected Operator(){
-        value=new AtomicBoolean(false);
-        inputs=new HashSet<>();
-        outputs=new HashSet<>();
-    }
-    protected abstract int getRequiredInputSize();
-    @Override public boolean acceptAddingOutput(Inputable i){return outputs.add(i);}
-    @Override public boolean acceptRemovingOutput(Inputable i){return outputs.remove(i);}
-    @Override public boolean addOutput(Inputable i){
-        if(outputs.add(i)){
-            if(!(i).acceptAddingInput(this)){
-                outputs.remove(i);
-                return false;
-            }
-            update();
-            return true;
-        }
-        return false;
-    }
-    @Override public boolean removeOutput(Inputable i){
-        if(outputs.remove(i)){
-            if(!i.acceptRemovingInput(this)) return false;
-            update();
-            return true;
-        }
-        return false;
-    }
-    @Override public boolean acceptAddingInput(Outputable o){return inputs.add(o);}
-    @Override public boolean acceptRemovingInput(Outputable o){return inputs.remove(o);}
+    private final AtomicBoolean value=new AtomicBoolean(false);
+    private final Set<Inputable> outputs=Collections.synchronizedSet(new HashSet<>());
     @Override public boolean addInput(Outputable o){
-        if(inputs.add(o)){
-            if(!o.acceptAddingOutput(this)){
-                inputs.remove(o);
-                return false;
-            }
+        if(o.addOutputRaw(this)&&addInputRaw(o)){
             update();
             return true;
-        }
-        return false;
+        }else return false;
+    }
+    @Override public boolean addOutput(Inputable i){
+        if(i.addInputRaw(this)&&addOutputRaw(i)){
+            i.update();
+            return true;
+        }else return false;
     }
     @Override public boolean removeInput(Outputable o){
-        if(inputs.remove(o)){
-            if(!o.acceptRemovingOutput(this)) return false;
+        if(o.removeOutputRaw(this)&&removeInputRaw(o)){
             update();
             return true;
-        }
-        return false;
+        }else return false;
     }
-    @Override public boolean getValue(){return value.get();}
-    public abstract boolean calculate(Collection<? extends Outputable> inputs);
+    @Override public boolean removeOutput(Inputable i){
+        if(i.removeInputRaw(this)&&removeOutputRaw(i)){
+            i.update();
+            return true;
+        }else return false;
+    }
+    @Override public boolean addOutputRaw(Inputable i){
+        return outputs.add(i);
+    }
+    @Override public boolean removeOutputRaw(Inputable i){
+        return outputs.remove(i);
+    }
     @Override public void update(){
-        boolean result=inputs.size()==getRequiredInputSize()?calculate(inputs):false;
+        boolean result=calculate();
         if(value.compareAndSet(!result,result))
-            for(Inputable i:outputs) i.update();
+            for(Inputable o:outputs)
+                o.update();
     }
-    @Override public void flush(){
-        value.set(calculate(inputs));
-        for(Inputable i:outputs) i.flush();
+    public abstract boolean calculate();
+    @Override public boolean getValue(){
+        return value.get();
     }
 }
