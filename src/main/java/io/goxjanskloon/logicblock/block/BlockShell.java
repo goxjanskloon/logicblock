@@ -1,9 +1,12 @@
 package io.goxjanskloon.logicblock.block;
+import java.util.*;
 public abstract class BlockShell implements Inputable{
-    protected Outputable proxy=null;
-    protected BlockShell(){}
+    protected Outputable proxy;
+    protected BlockShell(){
+        proxy=null;
+    }
     protected BlockShell(Outputable o){
-        connect(o);
+        proxy=o.addOutputRaw(this)?o:null;
     }
     public boolean getValue(){
         return proxy.getValue();
@@ -32,20 +35,22 @@ public abstract class BlockShell implements Inputable{
         }
         return false;
     }
-    public boolean reconnect(){
-        Outputable o=proxy;
+    public boolean reconnect(Outputable o){
         return disconnect()&&connect(o);
     }
     @Override public boolean addInput(Outputable o){
         throw new UnsupportedOperationException();
     }
     @Override public boolean addInputRaw(Outputable o){
-        return true;
+        throw new UnsupportedOperationException();
     }
     @Override public boolean removeInput(Outputable o){
         throw new UnsupportedOperationException();
     }
     @Override public boolean removeInputRaw(Outputable o){
-        return true;
+        throw new UnsupportedOperationException();
+    }
+    @Override public Collection<Outputable> getInputs(){
+        throw new UnsupportedOperationException();
     }
 }

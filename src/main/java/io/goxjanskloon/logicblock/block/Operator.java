@@ -60,10 +60,10 @@ public abstract class Operator implements Inputable,Outputable{
     @Override public boolean getValue(){
         return value.get();
     }
-    public Set<Outputable> getInputs(){
+    @Override public Set<Outputable> getInputs(){
         return Collections.unmodifiableSet(inputs);
     }
-    public Set<Inputable> getOutputs(){
+    @Override public Set<Inputable> getOutputs(){
         return Collections.unmodifiableSet(outputs);
     }
 }

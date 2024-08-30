@@ -1,44 +1,40 @@
 package io.goxjanskloon.logicblock;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import io.goxjanskloon.logicblock.block.BlockShell;
-import io.goxjanskloon.logicblock.block.Inputable;
-import io.goxjanskloon.logicblock.block.OperatorAnd;
-import io.goxjanskloon.logicblock.block.OperatorNot;
-import io.goxjanskloon.logicblock.block.OperatorOr;
-import io.goxjanskloon.logicblock.block.OperatorXor;
-import io.goxjanskloon.logicblock.block.Outputable;
-import io.goxjanskloon.logicblock.block.SignalSource;
-import org.apache.log4j.Logger;
+import io.goxjanskloon.logicblock.block.*;
+import io.goxjanskloon.util.*;
+import org.apache.log4j.*;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
 public class Board{
     private static final Logger logger=Logger.getLogger(Board.class);
-    public interface ModifyListener extends Comparable<ModifyListener>{
-        void modified(Outputable o);
-    }
-    public class Block extends BlockShell{
-        private Block(){}
-        private Block(Outputable o){
-            super(o);
-        }
-        @Override public void update(){
-            callModifyListeners(proxy);
-        }
+    public interface ModifyListener extends HashComparable{
+        void modified(Block b);
     }
     public static final List<Class<? extends Outputable>> types=Arrays.asList(null,OperatorNot.class,OperatorOr.class,OperatorAnd.class,OperatorXor.class, SignalSource.class);
-    private ArrayList<ArrayList<Block>> blocks=new ArrayList<>();
-    private final ConcurrentSkipListSet<ModifyListener> modifyListeners=new ConcurrentSkipListSet<>();
+    private ArrayList<ArrayList<Outputable>> blocks=new ArrayList<>();
+    private final Set<ModifyListener> modifyListeners=Collections.synchronizedSet(new HashSet<>());
     private ExecutorService threadPool=newThreadPool();
     public Board(){}
     public Board(int width,int height){
         resetToSize(width,height);
     }
-    public Block get(int x,int y){
+    public class Block implements Outputable{
+        public final int x,y;
+        private Block(int x,int y){
+            super();
+            this.x=x;
+            this.y=y;
+        }
+        private Block(int x,int y,Outputable o){
+            super(o);
+            this.x=x;
+            this.y=y;
+        }
+        @Override public void update(){
+            callModifyListeners(this);
+        }
+    }
+    public Outputable get(int x,int y){
         return blocks.get(y).get(x);
     }
     public boolean isEmpty(){
@@ -70,7 +66,13 @@ public class Board{
             return thread;
         });
     }
-    private void callModifyListeners(Outputable o){
+    public boolean addModifyListener(ModifyListener l){
+        return modifyListeners.add(l);
+    }
+    public boolean removeModifyListener(ModifyListener l){
+        return modifyListeners.remove(l);
+    }
+    private void callModifyListeners(Block o){
         threadPool.execute(()->{
             for(ModifyListener l:modifyListeners)
                 threadPool.execute(()->l.modified(o));
@@ -81,22 +83,27 @@ public class Board{
         try{
             Scanner scanner=new Scanner(reader);
             int width=scanner.nextInt(),height=scanner.nextInt();
-            for(int i=0;i<height;i++){
+            for(int i=0;i<height;++i){
                 blocks.add(new ArrayList<>());
-                for(int j=0;j<width;j++){
+                for(int j=0;j<width;++j){
                     Class<? extends Outputable> type=types.get(scanner.nextInt());
-                    Block block=null;
+                    Outputable block;
                     if(type==null)
-                        block=new Block();
-                    else{
-                        int inputSize=scanner.nextInt(),outputSize=scanner.nextInt();
-                        List<Outputable> inputs=new ArrayList<>();
-                        List<Inputable> outputs=new ArrayList<>();
-                        //for(;inputSize>0;--inputSize)
-                    }
+                        block=null;
+                    else if(type==SignalSource.class)
+                        block=new SignalSource(scanner.nextInt()==1);
+                    else block=type.getDeclaredConstructor().newInstance();
                     blocks.getLast().add(block);
                 }
             }
+            for(int i=0;i<height;++i)
+                for(int j=0;j<width;++j){
+                    Outputable block=blocks.get(i).get(j);
+                    for(int inputSize=scanner.nextInt();inputSize>0;--inputSize)
+                        ((Inputable)block).addInput(get(scanner.nextInt(),scanner.nextInt()));
+                    for(int outputSize=scanner.nextInt();outputSize>0;--outputSize)
+                        block.addOutput((Inputable)get(scanner.nextInt(),scanner.nextInt()));
+                }
             scanner.close();
         }catch(Exception e){
             logger.error("Error loading files. Clearing this board",e);
@@ -107,13 +114,30 @@ public class Board{
     }
     public boolean exportTo(Writer writer){
         try{
-            writer.write(blocks.getFirst().size()+" "+blocks.size()+" ");
-            for(int i=0;i<blocks.size();i++)
-                for(int j=0;j<blocks.get(i).size();j++){
-                    Block block=get(j,i);
-                    //writer.write(block.getType().ordinal()+" "+(block.getValue()?1:0)+" "+block.getFacing()+" ");
+            int width=getWidth(),height=getHeight();
+            writer.write(width+" "+height+" ");
+            for(int i=0;i<height;++i)
+                nextBlock:for(int j=0;j<width;++j){
+                    Outputable block=get(i,j);
+                    if(block==null)
+                        writer.write("0 ");
+                    else for(int k=1;k<types.size();++k)
+                        if(types.get(k).isAssignableFrom(block.getClass())){
+                            writer.write(k+" ");
+                            continue nextBlock;
+                        }
+                    throw new Exception("Invalid type");
                 }
-            writer.write("\n");
+            for(int i=0;i<height;++i)
+                for(int j=0;j<width;++j){
+                    Outputable block=get(i,j);
+                    if(block instanceof Inputable){
+                        Collection<Outputable> inputs=((Inputable)block).getInputs();
+                        writer.write(inputs.size()+" ");
+                        for(Outputable o:inputs)
+                            writer.write(o+" ");
+                    }else writer.write("0 ");
+                }
         }catch(Exception e){
             logger.error("Error exporting files.",e);
             return false;
@@ -125,7 +149,7 @@ public class Board{
         for(int i=0;i<height;++i){
             blocks.add(new ArrayList<>());
             //for(int j=0;j<width;j++)
-                //blocks.getLast().add(new Block(Block.Type.VOID,false,j,i,0));
+            //blocks.getLast().add(new Block(Block.Type.VOID,false,j,i,0));
         }
     }
 }

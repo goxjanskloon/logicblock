@@ -1,5 +1,6 @@
 package io.goxjanskloon.logicblock.block;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,6 +31,9 @@ public class SignalSource implements Outputable{
     }
     @Override public boolean removeOutputRaw(Inputable i){
         return outputs.remove(i);
+    }
+    @Override public Collection<Inputable> getOutputs(){
+        return Collections.unmodifiableCollection(outputs);
     }
     @Override public boolean getValue(){
         return value.get();
