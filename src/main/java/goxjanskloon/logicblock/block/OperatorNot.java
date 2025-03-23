@@ -1,4 +1,4 @@
-package io.goxjanskloon.logicblock.block;
+package goxjanskloon.logicblock.block;
 public class OperatorNot extends Operator{
     public OperatorNot(){
         super(1);

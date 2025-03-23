@@ -1,4 +1,4 @@
-package io.goxjanskloon.logicblock.block;
+package goxjanskloon.logicblock.block;
 public class OperatorAnd extends Operator{
     @Override public boolean calculate(){
         if(getInputs().isEmpty()) return false;

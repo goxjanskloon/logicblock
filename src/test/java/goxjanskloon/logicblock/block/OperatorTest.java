@@ -1,12 +1,6 @@
-import org.junit.Test;
-import io.goxjanskloon.logicblock.block.OperatorAnd;
-import io.goxjanskloon.logicblock.block.OperatorNot;
-import io.goxjanskloon.logicblock.block.OperatorOr;
-import io.goxjanskloon.logicblock.block.OperatorXor;
-import io.goxjanskloon.logicblock.block.SignalSource;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+package goxjanskloon.logicblock.block;
+import org.junit.*;
+import static org.junit.Assert.*;
 public class OperatorTest{
     @Test public void testOperatorNot(){
         OperatorNot op=new OperatorNot();

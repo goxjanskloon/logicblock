@@ -1,4 +1,4 @@
-package io.goxjanskloon.logicblock.block;
+package goxjanskloon.logicblock.block;
 
 import java.util.Collection;
 import java.util.Collections;

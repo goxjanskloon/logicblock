@@ -1,5 +1,5 @@
-package io.goxjanskloon.logicblock.block;
-import io.goxjanskloon.util.HashComparable;
+package goxjanskloon.logicblock.block;
+import goxjanskloon.util.HashComparable;
 import java.util.Collection;
 public interface Inputable extends HashComparable {
     boolean addInput(Outputable o);
