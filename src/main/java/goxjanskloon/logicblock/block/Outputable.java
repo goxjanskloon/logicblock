@@ -8,4 +8,5 @@ public interface Outputable extends HashComparable{
     boolean removeOutputRaw(Inputable i);
     boolean getValue();
     Collection<Inputable> getOutputs();
+    void clearOutputs();
 }

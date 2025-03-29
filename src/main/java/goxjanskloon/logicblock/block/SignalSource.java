@@ -1,5 +1,4 @@
 package goxjanskloon.logicblock.block;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -7,7 +6,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 public class SignalSource implements Outputable{
     private final AtomicBoolean value;
-    private final Set<Inputable> outputs= Collections.synchronizedSet(new HashSet<>());
+    private final Set<Inputable> outputs=Collections.synchronizedSet(new HashSet<>());
     public SignalSource(){
         this(false);
     }
@@ -34,6 +33,11 @@ public class SignalSource implements Outputable{
     }
     @Override public Collection<Inputable> getOutputs(){
         return Collections.unmodifiableCollection(outputs);
+    }
+    @Override public void clearOutputs(){
+        for(Inputable i:outputs)
+            i.removeInputRaw(this);
+        outputs.clear();
     }
     @Override public boolean getValue(){
         return value.get();

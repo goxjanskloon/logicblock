@@ -3,7 +3,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-public abstract class Operator implements Inputable,Outputable{
+public abstract class Operator implements Inputable{
     private final AtomicBoolean value=new AtomicBoolean(false);
     private final int requiredInputSize;
     private final Set<Outputable> inputs=Collections.synchronizedSet(new HashSet<>());
@@ -65,5 +65,15 @@ public abstract class Operator implements Inputable,Outputable{
     }
     @Override public Set<Inputable> getOutputs(){
         return Collections.unmodifiableSet(outputs);
+    }
+    @Override public void clearInputs(){
+        for(Outputable o:inputs)
+            o.removeOutputRaw(this);
+        inputs.clear();
+    }
+    @Override public void clearOutputs(){
+        for(Inputable i:outputs)
+            i.removeInputRaw(this);
+        outputs.clear();
     }
 }
