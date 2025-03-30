@@ -10,41 +10,21 @@ public class Board{//TODO: Implement custom Block usage
     public interface ModifyListener extends HashComparable{
         void modified(Block<?> b);
     }
-    public enum Type{
-        Not(OperatorNot.class),Or(OperatorOr.class),And(OperatorAnd.class),Xor(OperatorXor.class),Source(SignalSource.class);
-        private final Class<? extends Outputable> type;
-        Type(Class<? extends Outputable> type){
-            this.type=type;
-        }
-        Class<? extends Outputable> getType(){
-            return type;
-        }
-        public static Type get(int index){
-            return switch(index){
-            case 0->Not;
-            case 1->Or;
-            case 2->And;
-            case 3->Xor;
-            case 4->Source;
-            default->throw new IndexOutOfBoundsException("The index must be in [0,4]");
-            };
-        }
-        public static Class<? extends Outputable> getType(int index){
-            return get(index).type;
-        }
-    }
     private List<List<Block<? extends Outputable>>> blocks=new ArrayList<>();
     public static class Block<T extends Outputable> implements Outputable{
-        public final int x,y;
-        protected T proxy;
-        protected Block(int x,int y){
-            this.x=x;
-            this.y=y;
+        private int x,y;
+        public int getX(){
+            return x;
         }
-        protected Block(int x,int y,T o){
+        public int getY(){
+            return y;
+        }
+        protected T proxy;
+        public Block<T> initialize(int x,int y,T o){
             this.x=x;
             this.y=y;
-            proxy=o;
+            this.proxy=o;
+            return this;
         }
         public T get(){
             return proxy;
@@ -75,12 +55,6 @@ public class Board{//TODO: Implement custom Block usage
         }
     }
     public class InputableBlock<T extends Inputable> extends Block<T> implements Inputable{
-        protected InputableBlock(int x,int y){
-            super(x,y);
-        }
-        protected InputableBlock(int x,int y,T o){
-            super(x,y,o);
-        }
         @Override public boolean addInput(Outputable o){
             return o instanceof Block<?>&&proxy.addInput(o);
         }
@@ -108,9 +82,54 @@ public class Board{//TODO: Implement custom Block usage
             clearInputs();
         }
     }
-    public Board(){}
+    public static class ModifiableBlock<T extends Modifiable> extends Block<T> implements Modifiable{
+        @Override public void setValue(boolean value){
+            proxy.setValue(value);
+        }
+    }
     public Board(int width,int height){
-        resetToSize(width,height);
+        for(;height>0;--height){
+            List<Block<?>> row=new ArrayList<>();
+            for(int j=0;j<width;++j)
+                row.add(null);
+            blocks.add(row);
+        }
+    }
+    public Board(Readable reader){//TODO: Construct custom block
+        try{
+            Map<String,Class<?>> types=new HashMap<>(),blockTypes=new HashMap<>();
+            Scanner scanner=new Scanner(reader);
+            for(int i=scanner.nextInt();i>0;--i)
+                types.put(scanner.next(),Class.forName(scanner.next()));
+            for(int i=scanner.nextInt();i>0;--i)
+                blockTypes.put(scanner.next(),Class.forName(scanner.next()));
+            int width=scanner.nextInt(),height=scanner.nextInt();
+            for(int i=0;i<height;++i){
+                List<Block<?>> row=new ArrayList<>();
+                for(int j=0;j<width;++j){
+                    String typeName=scanner.next();
+                    if(typeName.equals("0"))
+                        row.add(new Block<>().initialize(j,i,null));
+                    else{
+                        Class<?> type=types.get(typeName),blockType=blockTypes.get(scanner.next());
+                        row.add(type.getCon)
+                    }
+                }
+                blocks.add(row);
+            }
+            for(List<Block<?>> i:blocks)
+                for(Block<?> j:i){
+                    int outputSize=scanner.nextInt();
+                    if(outputSize>0)
+                        for(Outputable o=j.get();outputSize>0;--outputSize)
+                            if(get(scanner.nextInt(),scanner.nextInt()).get() instanceof Inputable k)
+                                o.addOutput(k);
+                            else throw new RuntimeException(j+" outputs to an non-Inputable.");
+                }
+            scanner.close();
+        }catch(Exception e){
+            logger.error("Error constructing a Board from "+reader+".",e);
+        }
     }
     private final Set<ModifyListener> modifyListeners=Collections.synchronizedSet(new HashSet<>());
     public Set<ModifyListener> getModifyListeners(){
@@ -153,65 +172,17 @@ public class Board{//TODO: Implement custom Block usage
     public int getHeight(){
         return blocks.size();
     }
-    public void clear(){
+    public void dispose(){
         if(!isEmpty()){
             silence();
-            blocks=new ArrayList<>();
+
         }
     }
     public void silence(){
         threadPool.shutdownNow();
         threadPool=newThreadPool();
     }
-    public void resetToSize(int width,int height){
-        clear();
-        for(int i=0;i<height;++i){
-            List<Block<?>> row=new ArrayList<>();
-            for(int j=0;j<width;++j)
-                row.add(new Block<>(j,i));
-            blocks.add(row);
-        }
-    }
-    public boolean loadFrom(Readable reader){
-        clear();
-        try{
-            Scanner scanner=new Scanner(reader);
-            int width=scanner.nextInt(),height=scanner.nextInt();
-            for(int i=0;i<height;++i){
-                List<Block<?>> row=new ArrayList<>();
-                for(int j=0;j<width;++j){
-                    Class<? extends Outputable> type=Type.getType(scanner.nextInt());
-                    if(type==null)
-                        row.add(new Block<>(j,i,null));
-                    else if(type==SignalSource.class)
-                        row.add(new Block<>(j,i,new SignalSource(scanner.nextInt()==1)));
-                    else{
-                        Outputable o=type.getDeclaredConstructor().newInstance();
-                        if(o instanceof Inputable k)
-                            row.add(new InputableBlock<>(j,i,k));
-                        else row.add(new Block<>(j,i,o));
-                    }
-                }
-                blocks.add(row);
-            }
-            for(List<Block<?>> i:blocks)
-                for(Block<?> j:i){
-                    int outputSize=scanner.nextInt();
-                    if(outputSize>0)
-                        for(Outputable o=j.get();outputSize>0;--outputSize)
-                            if(get(scanner.nextInt(),scanner.nextInt()).get() instanceof Inputable k)
-                                o.addOutput(k);
-                            else throw new RuntimeException(j+" outputs to an non-Inputable.");
-                }
-            scanner.close();
-        }catch(Exception e){
-            logger.error("Error loading files. Clearing this board.",e);
-            clear();
-            return false;
-        }
-        return true;
-    }
-    public boolean exportTo(Writer writer){
+    public boolean exportTo(Writer writer){//TODO: Map types and export blocks
         try{
             int width=getWidth(),height=getHeight();
             writer.write(width+" "+height+" ");

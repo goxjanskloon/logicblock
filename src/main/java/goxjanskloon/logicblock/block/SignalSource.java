@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-public class SignalSource implements Outputable{
+public class SignalSource implements Outputable,Modifiable{
     private final AtomicBoolean value;
     private final Set<Inputable> outputs=Collections.synchronizedSet(new HashSet<>());
     public SignalSource(){
