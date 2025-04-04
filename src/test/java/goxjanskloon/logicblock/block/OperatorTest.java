@@ -40,7 +40,6 @@ public class OperatorTest{
         s1.setValue(true);
         assertTrue(op.getValue());
     }
-    
     @Test public void testOperatorXor(){
         OperatorXor op=new OperatorXor();
         SignalSource s1=new SignalSource(),s2=new SignalSource();

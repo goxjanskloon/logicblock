@@ -1,9 +1,9 @@
 package goxjanskloon.logicblock.block;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.Serial;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class Operator implements Inputable{
+    @Serial private static final long serialVersionUID=785129866438235819L;
     private final AtomicBoolean value=new AtomicBoolean(false);
     private final int requiredInputSize;
     private final Set<Outputable> inputs=Collections.synchronizedSet(new HashSet<>());

@@ -1,4 +1,5 @@
-logicblock.iml
+*.lgb
+*.iml
 .vscode
 .idea
 target

@@ -1,8 +1,8 @@
 package goxjanskloon.logicblock.block;
 import goxjanskloon.util.HashComparable;
-import java.io.Writer;
+import java.io.Serializable;
 import java.util.Collection;
-public interface Outputable extends HashComparable{
+public interface Outputable extends HashComparable,Serializable{
     boolean addOutput(Inputable i);
     boolean removeOutput(Inputable i);
     boolean addOutputRaw(Inputable i);
@@ -10,6 +10,7 @@ public interface Outputable extends HashComparable{
     boolean getValue();
     Collection<Inputable> getOutputs();
     void clearOutputs();
-    default void read(Readable reader){}
-    default void write(Writer writer){}
+    default void clear(){
+        clearOutputs();
+    }
 }

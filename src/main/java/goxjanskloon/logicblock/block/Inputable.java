@@ -9,4 +9,8 @@ public interface Inputable extends HashComparable,Outputable{
     Collection<Outputable> getInputs();
     void update();
     void clearInputs();
+    @Override default void clear(){
+        Outputable.super.clear();
+        clearInputs();
+    }
 }

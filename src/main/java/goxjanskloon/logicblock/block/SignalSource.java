@@ -1,10 +1,9 @@
 package goxjanskloon.logicblock.block;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.Serial;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 public class SignalSource implements Outputable,Modifiable{
+    @Serial private static final long serialVersionUID=7990541195675592204L;
     private final AtomicBoolean value;
     private final Set<Inputable> outputs=Collections.synchronizedSet(new HashSet<>());
     public SignalSource(){
