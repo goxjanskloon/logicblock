@@ -1,6 +1,9 @@
 package goxjanskloon.util;
+/**
+ * @author goxjanskloon
+ */
 public interface HashComparable extends Comparable<HashComparable>{
-    default int compareTo(HashComparable o){
+    @Override default int compareTo(HashComparable o){
         return Integer.compare(hashCode(),o.hashCode());
     }
 }

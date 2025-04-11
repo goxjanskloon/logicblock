@@ -17,14 +17,9 @@
             <version>4.13.2</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.platform</groupId>
-            <artifactId>org.eclipse.swt</artifactId>
-            <version>3.126.0</version>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.12</version>
+            <groupId>io.vavr</groupId>
+            <artifactId>vavr</artifactId>
+            <version>0.10.6</version>
         </dependency>
     </dependencies>
 </project>

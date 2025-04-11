@@ -2,11 +2,14 @@ package goxjanskloon.logicblock.block;
 import goxjanskloon.util.HashComparable;
 import java.io.Serializable;
 import java.util.Collection;
+/**
+ * @author goxjanskloon
+ */
 public interface Outputable extends HashComparable,Serializable{
-    boolean addOutput(Inputable i);
-    boolean removeOutput(Inputable i);
-    boolean addOutputRaw(Inputable i);
-    boolean removeOutputRaw(Inputable i);
+    void addOutput(Inputable i);
+    void removeOutput(Inputable i);
+    void addOutputRaw(Inputable i);
+    void removeOutputRaw(Inputable i);
     boolean getValue();
     Collection<Inputable> getOutputs();
     void clearOutputs();
