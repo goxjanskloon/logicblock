@@ -1,4 +1,7 @@
 package goxjanskloon.logicblock.block;
+/**
+ * @author goxjanskloon
+ */
 public class OperatorNot extends Operator{
     public OperatorNot(){
         super(1);

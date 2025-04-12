@@ -50,7 +50,7 @@ public abstract class Operator implements Inputable{
         outputs.remove(i);
     }
     @Override public void update(){
-        boolean result=calculate();
+        boolean result=getInputs().size()==requiredInputSize&&calculate();
         if(value.compareAndSet(!result,result)){
             for(Inputable o:outputs){
                 o.update();

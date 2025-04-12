@@ -2,7 +2,6 @@ package goxjanskloon.logicblock;
 import goxjanskloon.logicblock.block.*;
 import goxjanskloon.util.HashComparable;
 import io.vavr.API;
-
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -12,18 +11,29 @@ import java.util.concurrent.*;
  */
 public class Board implements Serializable{
     @Serial private static final long serialVersionUID=2092449927200056965L;
-    public interface Directional{
-        enum Facing{UP,RIGHT,DOWN,LEFT}
-        Facing getFacing();
-        void setFacing(Facing facing);
+    public interface Directional extends Outputable{
+        enum Direction{
+            UP,RIGHT,DOWN,LEFT;
+            public Direction opposite(){
+                return switch(this){
+                    case UP->DOWN;
+                    case RIGHT->LEFT;
+                    case DOWN->UP;
+                    case LEFT->RIGHT;
+                };
+            }
+        }
+        Direction getDirection();
+        void setDirection(Direction direction);
     }
     public static class Traverse extends Operator implements Directional{
-        private Directional.Facing facing;
-        @Override public Facing getFacing(){
-            return facing;
+        private Direction direction;
+        @Override public Direction getDirection(){
+            return direction;
         }
-        @Override public void setFacing(Facing facing){
-            this.facing=facing;
+        @Override public void setDirection(Direction direction){
+            this.direction=direction;
+            update();
         }
         @Override public boolean calculate(){
             return getInputs().iterator().next().getValue();
@@ -85,6 +95,46 @@ public class Board implements Serializable{
             return method.invoke(o,args);
         }
     }
+    private class TraverseInvocationHandler extends BlockInvocationHandler<Traverse>{
+        public TraverseInvocationHandler(int x,int y,Traverse o){
+            super(x,y,o);
+        }
+        public Outputable get(Directional.Direction direction){
+            try{
+                return switch(direction){
+                    case UP -> Board.this.get(x,y-1);
+                    case RIGHT -> Board.this.get(x+1,y);
+                    case DOWN -> Board.this.get(x,y+1);
+                    case LEFT -> Board.this.get(x-1,y);
+                };
+            }catch(IndexOutOfBoundsException e){
+                return null;
+            }
+        }
+        public void setDirection(Directional.Direction direction){
+            if(o.direction!=direction){
+                o.clear();
+                Directional.Direction inputDirection=direction.opposite();
+                Outputable input=get(inputDirection);
+                if(input!=null){
+                    o.addInput(input);
+                }
+                for(Directional.Direction f: Directional.Direction.values()){
+                    if(f!=inputDirection&&get(f) instanceof Inputable i){
+                        o.addOutput(i);
+                    }
+                }
+                o.setDirection(direction);
+            }
+        }
+        @Override public Object invoke(Object proxy,Method method,Object[] args) throws Throwable{
+            if(method.equals(Directional.class.getMethod("setDirection",Directional.Direction.class))){
+                setDirection((Directional.Direction)args[0]);
+                return null;
+            }
+            return super.invoke(proxy,method,args);
+        }
+    }
     public <T extends Outputable> void set(int x,int y,T o,Class<? super T> i){
         Outputable old=blocks[x][y];
         if(old!=null){
@@ -92,6 +142,11 @@ public class Board implements Serializable{
             old.clear();
         }
         blockSet.add(o);
+        if(o instanceof Traverse t){
+            TraverseInvocationHandler handler=new TraverseInvocationHandler(x,y,t);
+            blocks[x][y]=(Outputable)Proxy.newProxyInstance(i.getClassLoader(),new Class[]{i},handler);
+            handler.setDirection(Directional.Direction.UP);
+        }
         blocks[x][y]=(Outputable)Proxy.newProxyInstance(i.getClassLoader(),new Class[]{i},new BlockInvocationHandler<>(x,y,o));
     }
     public int getWidth(){
