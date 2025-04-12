@@ -50,11 +50,18 @@ public abstract class Operator implements Inputable{
         outputs.remove(i);
     }
     @Override public void update(){
-        boolean result=getInputs().size()==requiredInputSize&&calculate();
+        boolean result=!inputs.isEmpty()&&(requiredInputSize==Integer.MAX_VALUE||getInputs().size()==requiredInputSize)&&calculate();
         if(value.compareAndSet(!result,result)){
-            for(Inputable o:outputs){
-                o.update();
-            }
+            updateOutputs();
+        }
+    }
+    @Override public void forceUpdate(){
+        value.set(!inputs.isEmpty()&&(requiredInputSize==Integer.MAX_VALUE||getInputs().size()==requiredInputSize)&&calculate());
+        updateOutputs();
+    }
+    @Override public void updateOutputs(){
+        for(Inputable o:outputs){
+            o.update();
         }
     }
     public abstract boolean calculate();

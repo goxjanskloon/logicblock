@@ -11,6 +11,7 @@ public interface Inputable extends HashComparable,Outputable{
     void removeInputRaw(Outputable o);
     Collection<Outputable> getInputs();
     void update();
+    void forceUpdate();
     void clearInputs();
     @Override default void clear(){
         Outputable.super.clear();

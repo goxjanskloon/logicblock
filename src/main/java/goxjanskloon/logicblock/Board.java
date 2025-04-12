@@ -11,7 +11,7 @@ import java.util.concurrent.*;
  */
 public class Board implements Serializable{
     @Serial private static final long serialVersionUID=2092449927200056965L;
-    public interface Directional extends Outputable{
+    public interface Directional extends Inputable{
         enum Direction{
             UP,RIGHT,DOWN,LEFT;
             public Direction opposite(){
@@ -33,7 +33,7 @@ public class Board implements Serializable{
         }
         @Override public void setDirection(Direction direction){
             this.direction=direction;
-            update();
+            forceUpdate();
         }
         @Override public boolean calculate(){
             return getInputs().iterator().next().getValue();
@@ -43,17 +43,25 @@ public class Board implements Serializable{
         void modified(int x,int y);
     }
     private final Outputable[][] blocks;
-    private final Set<Outputable> blockSet;
+    private record Position(int x,int y) implements Serializable{}
+    private final Map<Outputable,Position> blockSet;
     public Board(int width,int height){
         blocks=new Outputable[width][height];
-        blockSet=new HashSet<>();
+        blockSet=new HashMap<>();
+        modifyListeners=new HashSet<>();
+        threadPool=newThreadPool();
+    }
+    @Serial private void readObject(ObjectInputStream in) throws IOException,ClassNotFoundException{
+        in.defaultReadObject();
+        modifyListeners=new HashSet<>();
+        threadPool=newThreadPool();
     }
     private transient Set<ModifyListener> modifyListeners;
     public Set<ModifyListener> getModifyListeners(){
-        return Objects.requireNonNullElseGet(modifyListeners,()->modifyListeners=Collections.synchronizedSet(new HashSet<>()));
+        return modifyListeners;
     }
     public void callModifyListeners(int x,int y){
-        async(()->getModifyListeners().parallelStream().<Runnable>map(l->()->l.modified(x,y)).forEach(this::async));
+        threadPool.execute(()->modifyListeners.parallelStream().<Runnable>map(l->()->l.modified(x,y)).forEach(threadPool::execute));
     }
     private transient ExecutorService threadPool;
     private ExecutorService newThreadPool(){
@@ -66,9 +74,6 @@ public class Board implements Serializable{
     public Outputable get(int x,int y){
         return blocks[x][y];
     }
-    private void async(Runnable r){
-        (Objects.requireNonNullElseGet(threadPool,()->threadPool=newThreadPool())).execute(r);
-    }
     private class BlockInvocationHandler<T extends Outputable> implements InvocationHandler,Serializable{
         @Serial private static final long serialVersionUID=-8370160480915304240L;
         public final int x;
@@ -80,15 +85,20 @@ public class Board implements Serializable{
             this.o=o;
         }
         @Override public Object invoke(Object proxy,Method method,Object[] args) throws Throwable{
-            if(proxy instanceof Inputable&&method.equals(Inputable.class.getMethod("update"))){
-                async((Runnable)API.unchecked(()->method.invoke(o)));
+            if(o instanceof Inputable&&method.equals(Inputable.class.getMethod("update"))){
+                threadPool.execute(()->API.unchecked(()->method.invoke(o)).apply());
                 callModifyListeners(x,y);
                 return null;
             }
             if(args!=null){
-                for(Object arg:args){
-                    if(arg instanceof Outputable&&!(Proxy.isProxyClass(arg.getClass())||blockSet.contains(arg))){
-                        throw new IllegalArgumentException("Calling method '"+method+"' on block ("+x+","+y+") with argument "+arg+" that is not a proxy object (not in the board "+Board.this+").");
+                for(int i=0;i<args.length;++i){
+                    if(args[i] instanceof Outputable a&&!Proxy.isProxyClass(args[i].getClass())){
+                        Position p=blockSet.get(a);
+                        if(p!=null){
+                            args[i]=get(p.x,p.y);
+                        }else{
+                            throw new IllegalArgumentException("Calling method '"+method+"' on block ("+x+","+y+") with argument "+args[i]+" that is not a proxy object (not in the board "+Board.this+").");
+                        }
                     }
                 }
             }
@@ -102,10 +112,10 @@ public class Board implements Serializable{
         public Outputable get(Directional.Direction direction){
             try{
                 return switch(direction){
-                    case UP -> Board.this.get(x,y-1);
-                    case RIGHT -> Board.this.get(x+1,y);
-                    case DOWN -> Board.this.get(x,y+1);
-                    case LEFT -> Board.this.get(x-1,y);
+                    case UP->Board.this.get(x,y-1);
+                    case RIGHT->Board.this.get(x+1,y);
+                    case DOWN->Board.this.get(x,y+1);
+                    case LEFT->Board.this.get(x-1,y);
                 };
             }catch(IndexOutOfBoundsException e){
                 return null;
@@ -116,11 +126,11 @@ public class Board implements Serializable{
                 o.clear();
                 Directional.Direction inputDirection=direction.opposite();
                 Outputable input=get(inputDirection);
-                if(input!=null){
+                if(input!=null&&(!(input instanceof Traverse t)||t.getDirection()!=inputDirection)){
                     o.addInput(input);
                 }
-                for(Directional.Direction f: Directional.Direction.values()){
-                    if(f!=inputDirection&&get(f) instanceof Inputable i){
+                for(Directional.Direction f:Directional.Direction.values()){
+                    if(f!=inputDirection&&get(f) instanceof Inputable i&&(!(i instanceof Traverse t)||t.getDirection()==f)){
                         o.addOutput(i);
                     }
                 }
@@ -141,13 +151,8 @@ public class Board implements Serializable{
             blockSet.remove(((BlockInvocationHandler<?>)Proxy.getInvocationHandler(old)).o);
             old.clear();
         }
-        blockSet.add(o);
-        if(o instanceof Traverse t){
-            TraverseInvocationHandler handler=new TraverseInvocationHandler(x,y,t);
-            blocks[x][y]=(Outputable)Proxy.newProxyInstance(i.getClassLoader(),new Class[]{i},handler);
-            handler.setDirection(Directional.Direction.UP);
-        }
-        blocks[x][y]=(Outputable)Proxy.newProxyInstance(i.getClassLoader(),new Class[]{i},new BlockInvocationHandler<>(x,y,o));
+        blockSet.put(o,new Position(x,y));
+        blocks[x][y]=(Outputable)Proxy.newProxyInstance(i.getClassLoader(),new Class[]{i},o instanceof Traverse t?new TraverseInvocationHandler(x,y,t):new BlockInvocationHandler<>(x,y,o));
     }
     public int getWidth(){
         return blocks.length;

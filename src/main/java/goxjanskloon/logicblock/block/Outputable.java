@@ -11,6 +11,7 @@ public interface Outputable extends HashComparable,Serializable{
     void addOutputRaw(Inputable i);
     void removeOutputRaw(Inputable i);
     boolean getValue();
+    void updateOutputs();
     Collection<Inputable> getOutputs();
     void clearOutputs();
     default void clear(){

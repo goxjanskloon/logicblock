@@ -43,10 +43,10 @@ public class SignalSource implements Outputable,Modifiable{
     }
     @Override public void setValue(boolean newValue){
         if(value.compareAndSet(!newValue,newValue)){
-            update();
+            updateOutputs();
         }
     }
-    public void update(){
+    @Override public void updateOutputs(){
         for(Inputable i:outputs){
             i.update();
         }
