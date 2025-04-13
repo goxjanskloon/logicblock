@@ -1,4 +1,6 @@
 package goxjanskloon.logicblock;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import goxjanskloon.logicblock.block.*;
 import goxjanskloon.util.HashComparable;
 import io.vavr.API;
@@ -42,19 +44,34 @@ public class Board implements Serializable{
     public interface ModifyListener extends HashComparable{
         void modified(int x,int y);
     }
-    private final Outputable[][] blocks;
+    private Outputable[][] blocks;
     private record Position(int x,int y) implements Serializable{}
-    private final Map<Outputable,Position> blockSet;
+    private BiMap<Outputable,Position> blockSet;
     public Board(int width,int height){
         blocks=new Outputable[width][height];
-        blockSet=new HashMap<>();
+        blockSet=HashBiMap.create();
         modifyListeners=new HashSet<>();
         threadPool=newThreadPool();
     }
-    @Serial private void readObject(ObjectInputStream in) throws IOException,ClassNotFoundException{
-        in.defaultReadObject();
+    @Serial @SuppressWarnings("unchecked") private void readObject(ObjectInputStream in) throws IOException,ClassNotFoundException{
+        blocks=(Outputable[][])in.readObject();
+        blockSet=(BiMap<Outputable,Position>)in.readObject();
         modifyListeners=new HashSet<>();
         threadPool=newThreadPool();
+    }
+    @Serial private void writeObject(ObjectOutputStream out) throws IOException{
+        out.writeObject(blocks);
+        out.writeObject(blockSet);
+        Map<Position,Outputable> index=blockSet.inverse();
+        for(Outputable[] line:blocks){
+            for(Outputable o:line){
+                if(o instanceof Inputable i){
+                    for(Outputable input:i.getInputs()){
+
+                    }
+                }
+            }
+        }
     }
     private transient Set<ModifyListener> modifyListeners;
     public Set<ModifyListener> getModifyListeners(){
@@ -74,7 +91,7 @@ public class Board implements Serializable{
     public Outputable get(int x,int y){
         return blocks[x][y];
     }
-    private class BlockInvocationHandler<T extends Outputable> implements InvocationHandler,Serializable{
+    private class BlockInvocationHandler<T extends Outputable> implements InvocationHandler,Serializable,HashComparable{
         @Serial private static final long serialVersionUID=-8370160480915304240L;
         public final int x;
         public final int y;

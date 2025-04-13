@@ -1,16 +1,17 @@
 package goxjanskloon.logicblock.block;
-import java.io.Serial;
+import com.google.common.collect.ImmutableSet;
+
+import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author goxjanskloon
  */
 public abstract class Operator implements Inputable{
     @Serial private static final long serialVersionUID=785129866438235819L;
-    private final AtomicBoolean value=new AtomicBoolean(false);
+    private boolean value=false;
     private final int requiredInputSize;
-    private final Set<Outputable> inputs=Collections.synchronizedSet(new HashSet<>());
-    private final Set<Inputable> outputs=Collections.synchronizedSet(new HashSet<>());
+    private transient Set<Outputable> inputs=new HashSet<>();
+    private transient Set<Inputable> outputs=new HashSet<>();
     protected Operator(int requiredInputSize){
         this.requiredInputSize=requiredInputSize;
     }
@@ -51,12 +52,13 @@ public abstract class Operator implements Inputable{
     }
     @Override public void update(){
         boolean result=!inputs.isEmpty()&&(requiredInputSize==Integer.MAX_VALUE||getInputs().size()==requiredInputSize)&&calculate();
-        if(value.compareAndSet(!result,result)){
+        if(value!=result){
+            value=result;
             updateOutputs();
         }
     }
     @Override public void forceUpdate(){
-        value.set(!inputs.isEmpty()&&(requiredInputSize==Integer.MAX_VALUE||getInputs().size()==requiredInputSize)&&calculate());
+        value=!inputs.isEmpty()&&(requiredInputSize==Integer.MAX_VALUE||getInputs().size()==requiredInputSize)&&calculate();
         updateOutputs();
     }
     @Override public void updateOutputs(){
@@ -66,13 +68,13 @@ public abstract class Operator implements Inputable{
     }
     public abstract boolean calculate();
     @Override public boolean getValue(){
-        return value.get();
+        return value;
     }
     @Override public Set<Outputable> getInputs(){
-        return Collections.unmodifiableSet(inputs);
+        return ImmutableSet.copyOf(inputs);
     }
     @Override public Set<Inputable> getOutputs(){
-        return Collections.unmodifiableSet(outputs);
+        return ImmutableSet.copyOf(outputs);
     }
     @Override public void clearInputs(){
         for(Outputable o:inputs){
@@ -85,5 +87,10 @@ public abstract class Operator implements Inputable{
             i.removeInputRaw(this);
         }
         outputs.clear();
+    }
+    @Serial private void readObject(ObjectInputStream in) throws IOException,ClassNotFoundException{
+        in.defaultReadObject();
+        inputs=new HashSet<>();
+        outputs=new HashSet<>();
     }
 }

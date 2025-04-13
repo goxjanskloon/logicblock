@@ -1,4 +1,8 @@
 package goxjanskloon.logicblock.block;
+import com.google.common.collect.ImmutableSet;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serial;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -8,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SignalSource implements Outputable,Modifiable{
     @Serial private static final long serialVersionUID=7990541195675592204L;
     private final AtomicBoolean value;
-    private final Set<Inputable> outputs=Collections.synchronizedSet(new HashSet<>());
+    private transient Set<Inputable> outputs=Collections.synchronizedSet(new HashSet<>());
     public SignalSource(){
         this(false);
     }
@@ -30,7 +34,7 @@ public class SignalSource implements Outputable,Modifiable{
         outputs.remove(i);
     }
     @Override public Collection<Inputable> getOutputs(){
-        return Collections.unmodifiableCollection(outputs);
+        return ImmutableSet.copyOf(outputs);
     }
     @Override public void clearOutputs(){
         for(Inputable i:outputs){
@@ -50,5 +54,9 @@ public class SignalSource implements Outputable,Modifiable{
         for(Inputable i:outputs){
             i.update();
         }
+    }
+    @Serial private void readObject(ObjectInputStream in) throws IOException,ClassNotFoundException{
+        in.defaultReadObject();
+        outputs=new HashSet<>();
     }
 }
